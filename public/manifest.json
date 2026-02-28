@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "FlatFlow",
+  "version": "0.1.2",
+  "description": "Automatically repost listings",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "FlatFlow",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "permissions": ["tabs", "activeTab", "scripting"],
+  "optional_host_permissions": ["https://www.myhome.ge/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://www.myhome.ge/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

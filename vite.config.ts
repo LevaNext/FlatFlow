@@ -4,10 +4,30 @@ import { defineConfig } from "vite";
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: "./",
   plugins: [react()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+  },
+  build: {
+    rollupOptions: {
+      input: {
+        index: path.resolve(__dirname, "index.html"),
+        popup: path.resolve(__dirname, "popup.html"),
+        content: path.resolve(__dirname, "src/extension/content.ts"),
+      },
+      output: {
+        entryFileNames: (chunkInfo) =>
+          chunkInfo.name === "content"
+            ? "content.js"
+            : "assets/[name]-[hash].js",
+        chunkFileNames: "assets/[name]-[hash].js",
+        assetFileNames: "assets/[name]-[hash][extname]",
+      },
+    },
+    outDir: "dist",
+    emptyOutDir: true,
   },
 });

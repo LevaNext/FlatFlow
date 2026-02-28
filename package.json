@@ -1,21 +1,29 @@
 {
   "name": "flatflow",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.1.2",
   "type": "module",
   "packageManager": "pnpm@9.15.0",
   "scripts": {
     "dev": "vite --open",
     "build": "tsc -b && vite build",
+    "build:extension": "pnpm run build && echo 'Load unpacked extension from: dist/'",
     "check": "biome check .",
+    "check:fix": "biome check --write .",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@radix-ui/react-dropdown-menu": "^2.1.16",
+    "@radix-ui/react-slot": "^1.2.4",
+    "@radix-ui/react-tabs": "^1.1.13",
+    "@radix-ui/react-toggle": "^1.1.10",
+    "@radix-ui/react-toggle-group": "^1.1.11",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "geist": "^1.7.0",
     "lucide-react": "^0.575.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
@@ -24,6 +32,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.4",
+    "@types/chrome": "^0.1.37",
     "@types/node": "^24.11.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
