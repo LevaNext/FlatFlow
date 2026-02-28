@@ -19,11 +19,19 @@
       "128": "icons/icon128.png"
     }
   },
-  "permissions": ["tabs", "activeTab", "scripting"],
-  "optional_host_permissions": ["https://www.myhome.ge/*"],
+  "permissions": ["tabs", "activeTab", "scripting","storage"],
+  "optional_host_permissions": [
+    "https://www.myhome.ge/*",
+    "https://www.ss.ge/*",
+    "https://ss.ge/*","https://statements.myhome.ge/*"
+  ],
   "content_scripts": [
     {
-      "matches": ["https://www.myhome.ge/*"],
+      "matches": [
+        "https://www.myhome.ge/*",
+        "https://www.ss.ge/*",
+        "https://ss.ge/*","https://statements.myhome.ge/*"
+      ],
       "js": ["content.js"],
       "run_at": "document_idle"
     }

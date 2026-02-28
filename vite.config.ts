@@ -16,13 +16,9 @@ export default defineConfig({
       input: {
         index: path.resolve(__dirname, "index.html"),
         popup: path.resolve(__dirname, "popup.html"),
-        content: path.resolve(__dirname, "src/extension/content.ts"),
       },
       output: {
-        entryFileNames: (chunkInfo) =>
-          chunkInfo.name === "content"
-            ? "content.js"
-            : "assets/[name]-[hash].js",
+        entryFileNames: "assets/[name]-[hash].js",
         chunkFileNames: "assets/[name]-[hash].js",
         assetFileNames: "assets/[name]-[hash][extname]",
       },
