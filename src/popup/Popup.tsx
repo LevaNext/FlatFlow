@@ -1,7 +1,5 @@
 import { AlertCircle, Moon, Settings, Sun } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { createRoot } from "react-dom/client";
-import "../index.css";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -13,17 +11,23 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { detectSite, type SiteId } from "@/parsing";
 import { MESSAGE_PARSE_LISTING } from "@/extension/messages";
+import { useActiveTabDomain } from "@/hooks/useActiveTabDomain";
+import { detectSite, type SiteId } from "@/parsing";
 import {
   getParsedListing,
+  type SaveResult,
   saveParsedListing,
 } from "@/storage/parsedListingStorage";
 import type { ListingData } from "@/types/listing";
 import type { ParserError } from "@/types/parser";
+import "../index.css";
 import { ListingPreview } from "./components/ListingPreview";
 import { ParsingErrors } from "./components/ParsingErrors";
+import { SelectListingView } from "./components/SelectListingView";
+import { StatementSuccessView } from "./components/StatementSuccessView";
 import { UnsupportedMessage } from "./components/UnsupportedMessage";
+import { UnsupportedSiteView } from "./components/UnsupportedSiteView";
 
 const SS_COMING_SOON = "SS.ge parsing coming soon";
 const MYHOME_STATEMENT_URL =
@@ -32,10 +36,10 @@ const MYHOME_STATEMENT_URL =
 function UploadButtons({
   siteId,
   onMyHomeClick,
-}: {
+}: Readonly<{
   siteId: SiteId | null;
   onMyHomeClick: () => void;
-}): React.ReactElement {
+}>): React.ReactElement {
   const myHomeEnabled = siteId === "myhome";
 
   return (
@@ -62,6 +66,8 @@ const LANGUAGE_LABELS: Record<Language, string> = {
 };
 
 function Popup(): React.ReactElement {
+  const { isSupported, isStatementPage, isMyHomeRoot, isLoading } =
+    useActiveTabDomain();
   const [theme, setTheme] = useState<Theme>("dark");
   const [language, setLanguage] = useState<Language>("en");
   const [siteId, setSiteId] = useState<SiteId | null>(null);
@@ -103,6 +109,124 @@ function Popup(): React.ReactElement {
       },
     ]);
   }, []);
+
+  type ParseMessageResponse =
+    | {
+        listing?: ListingData | null;
+        errors?: ParserError[];
+        error?: string;
+      }
+    | undefined;
+
+  const onListingSaved = useCallback(
+    (saveResult: SaveResult) => {
+      if (!saveResult.ok) {
+        addError(`Storage: ${saveResult.error}`);
+      }
+    },
+    [addError],
+  );
+
+  const handleParseResponse = useCallback(
+    (response: ParseMessageResponse) => {
+      setLoading(false);
+      const errs = response?.errors ?? [];
+      setParsingErrors(errs);
+      if (errs.length > 0) {
+        for (const e of errs) {
+          addError(`[${e.code}] ${e.message}`);
+        }
+      }
+      if (response?.listing) {
+        setListing(response.listing);
+        setError(null);
+        saveParsedListing({
+          data: response.listing,
+          errors: errs,
+          meta: {
+            source: response.listing.source,
+            parsedAt: Date.now(),
+          },
+        }).then(onListingSaved);
+      } else {
+        setError(response?.error ?? "Failed to parse listing");
+        if (response?.error) addError(response.error);
+      }
+    },
+    [addError, onListingSaved],
+  );
+
+  const onScriptInjected = useCallback(
+    (retry: () => void) => {
+      if (chrome.runtime.lastError) {
+        setLoading(false);
+        setError(
+          "Could not read page. Refresh the listing page and try again.",
+        );
+        addError(
+          chrome.runtime.lastError?.message ??
+            "Content script injection failed",
+        );
+        return;
+      }
+      retry();
+    },
+    [addError],
+  );
+
+  const onParseMessageReceived = useCallback(
+    (
+      response: { listing?: ListingData; error?: string } | undefined,
+      tabId: number,
+      retried: boolean,
+      retry: () => void,
+    ) => {
+      if (chrome.runtime.lastError) {
+        if (!retried && chrome.scripting?.executeScript) {
+          chrome.scripting.executeScript(
+            { target: { tabId }, files: ["content.js"] },
+            () => onScriptInjected(retry),
+          );
+          return;
+        }
+        setLoading(false);
+        setError(
+          "Could not read page. Refresh the listing page and try again.",
+        );
+        addError(chrome.runtime.lastError?.message ?? "Content script error");
+        return;
+      }
+      handleParseResponse(response);
+    },
+    [addError, handleParseResponse, onScriptInjected],
+  );
+
+  const makeParseMessageHandler = useCallback(
+    (tabId: number, retried: boolean, retry: () => void) =>
+      (
+        response:
+          | {
+              listing?: ListingData;
+              error?: string;
+            }
+          | undefined,
+      ) => {
+        onParseMessageReceived(response, tabId, retried, retry);
+      },
+    [onParseMessageReceived],
+  );
+
+  const trySendParseMessage = useCallback(
+    (tabId: number, retried: boolean) => {
+      const retry = () => trySendParseMessage(tabId, true);
+      chrome.tabs.sendMessage(
+        tabId,
+        { type: MESSAGE_PARSE_LISTING },
+        makeParseMessageHandler(tabId, retried, retry),
+      );
+    },
+    [makeParseMessageHandler],
+  );
 
   const requestListingFromCurrentTab = useCallback(() => {
     setError(null);
@@ -151,108 +275,31 @@ function Popup(): React.ReactElement {
           return;
         }
 
-        const handleResponse = (
-          response:
-            | {
-                listing?: ListingData | null;
-                errors?: ParserError[];
-                error?: string;
-              }
-            | undefined,
-        ) => {
-          setLoading(false);
-          const errs = response?.errors ?? [];
-          setParsingErrors(errs);
-          if (errs.length > 0) {
-            for (const e of errs) {
-              addError(`[${e.code}] ${e.message}`);
-            }
-          }
-          if (response?.listing) {
-            setListing(response.listing);
-            setError(null);
-            saveParsedListing({
-              data: response.listing,
-              errors: errs,
-              meta: {
-                source: response.listing.source,
-                parsedAt: Date.now(),
-              },
-            }).then((saveResult) => {
-              if (!saveResult.ok) {
-                addError(`Storage: ${saveResult.error}`);
-              }
-            });
-          } else {
-            setError(response?.error ?? "Failed to parse listing");
-            if (response?.error) addError(response.error);
-          }
-        };
-
-        const tabId = tab.id;
-        const trySendMessage = (retried = false) => {
-          chrome.tabs.sendMessage(
-            tabId,
-            { type: MESSAGE_PARSE_LISTING },
-            (response: { listing?: ListingData; error?: string } | undefined) => {
-              if (chrome.runtime.lastError) {
-                if (
-                  !retried &&
-                  chrome.scripting?.executeScript
-                ) {
-                  chrome.scripting.executeScript(
-                    { target: { tabId }, files: ["content.js"] },
-                    () => {
-                      if (chrome.runtime.lastError) {
-                        setLoading(false);
-                        setError(
-                          "Could not read page. Refresh the listing page and try again.",
-                        );
-                        addError(
-                          chrome.runtime.lastError?.message ??
-                            "Content script injection failed",
-                        );
-                        return;
-                      }
-                      trySendMessage(true);
-                    },
-                  );
-                  return;
-                }
-                setLoading(false);
-                setError(
-                  "Could not read page. Refresh the listing page and try again.",
-                );
-                addError(
-                  chrome.runtime.lastError?.message ?? "Content script error",
-                );
-                return;
-              }
-              handleResponse(response);
-            },
-          );
-        };
-
-        trySendMessage();
+        trySendParseMessage(tab.id, false);
       },
     );
-  }, [addError]);
+  }, [addError, trySendParseMessage]);
 
+  // When the active tab is myhome.ge with a path (listing page), parse listing. Skip at root (isMyHomeRoot).
   useEffect(() => {
+    if (!isSupported || isMyHomeRoot) return;
     requestListingFromCurrentTab();
-  }, [requestListingFromCurrentTab]);
+  }, [isSupported, isMyHomeRoot, requestListingFromCurrentTab]);
 
   const handleUploadMyHome = useCallback(() => {
-    if (typeof chrome !== "undefined" && chrome.tabs) {
-      chrome.tabs.create({ url: MYHOME_STATEMENT_URL });
-    }
+    if (typeof chrome === "undefined" || !chrome.tabs) return;
+    // Keep parsed listing in storage so the statement page content script can read it and fill price + photos.
+    // Do not clear here; the statement page reads from storage on load.
+    setListing(null);
+    setParsingErrors([]);
+    setSiteId(null);
+    setError(null);
+    chrome.tabs.create({ url: MYHOME_STATEMENT_URL });
   }, []);
 
   const renderCurrentPageContent = (): React.ReactElement => {
     if (loading) {
-      return (
-        <p className="text-sm text-muted-foreground">Parsing listing…</p>
-      );
+      return <p className="text-sm text-muted-foreground">Parsing listing…</p>;
     }
     if (siteId === "unsupported") {
       return (
@@ -291,12 +338,29 @@ function Popup(): React.ReactElement {
         );
       }
     }
-    return (
-      <>
-        <UploadButtons siteId={siteId} onMyHomeClick={handleUploadMyHome} />
-      </>
-    );
+    return <UploadButtons siteId={siteId} onMyHomeClick={handleUploadMyHome} />;
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-full w-full items-center justify-center bg-background text-muted-foreground text-sm">
+        Checking…
+      </div>
+    );
+  }
+  // statements.myhome.ge → success/encouragement state only
+  if (isStatementPage) {
+    return <StatementSuccessView />;
+  }
+  // myhome.ge at root only (no path) → "Select a Listing" empty state
+  if (isMyHomeRoot) {
+    return <SelectListingView />;
+  }
+  // Any other domain → unsupported
+  if (!isSupported) {
+    return <UnsupportedSiteView />;
+  }
+  // myhome.ge with path (listing pages) → normal app UI
 
   return (
     <div className="flex h-full w-full flex-col overflow-hidden border-0 bg-background font-sans text-foreground popup-root-shadow">
@@ -418,7 +482,4 @@ function Popup(): React.ReactElement {
   );
 }
 
-const root = document.getElementById("root");
-if (root) {
-  createRoot(root).render(<Popup />);
-}
+export default Popup;

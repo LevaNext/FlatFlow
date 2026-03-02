@@ -9,8 +9,6 @@ const NOT_SUPPORTED_MESSAGE = "Not supported yet";
 export function parseSsListing(_doc: Document): ParserOutput<ListingData> {
   return {
     data: { source: "ss" },
-    errors: [
-      { code: "SS_NOT_IMPLEMENTED", message: NOT_SUPPORTED_MESSAGE },
-    ],
+    errors: [{ code: "SS_NOT_IMPLEMENTED", message: NOT_SUPPORTED_MESSAGE }],
   };
 }

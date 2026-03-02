@@ -1,3 +1,7 @@
+/**
+ * Legacy/default Vite app component. The extension UI runs in the Side Panel
+ * and is mounted from main.tsx as the Popup component (src/popup/Popup.tsx).
+ */
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 

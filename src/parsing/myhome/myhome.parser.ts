@@ -6,9 +6,10 @@ import { getTitle } from "./selectors/getTitle";
 
 const SOURCE: ListingData["source"] = "myhome";
 
-function toParserError(
-  result: { ok: false; error: { code: string; message: string } },
-): ParserError {
+function toParserError(result: {
+  ok: false;
+  error: { code: string; message: string };
+}): ParserError {
   return { code: result.error.code, message: result.error.message };
 }
 

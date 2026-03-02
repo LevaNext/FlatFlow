@@ -44,7 +44,9 @@ export function parseListing(
   } catch {
     return {
       listing: null,
-      errors: [{ code: "PARSE_FAILED", message: "Parser threw an unexpected error." }],
+      errors: [
+        { code: "PARSE_FAILED", message: "Parser threw an unexpected error." },
+      ],
     };
   }
 }

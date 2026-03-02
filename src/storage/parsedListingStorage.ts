@@ -7,7 +7,8 @@
 import type { ListingData, ListingSource } from "@/types/listing";
 import type { ParserError } from "@/types/parser";
 
-const STORAGE_KEY = "parsedListing";
+/** Single source for the chrome.storage.local key used by popup and content script. */
+export const PARSED_LISTING_STORAGE_KEY = "parsedListing";
 
 export interface ParsedListingMeta {
   source: ListingSource;
@@ -40,7 +41,7 @@ export async function saveParsedListing(
     return { ok: false, error: "Storage not available" };
   }
   try {
-    await chrome.storage.local.set({ [STORAGE_KEY]: payload });
+    await chrome.storage.local.set({ [PARSED_LISTING_STORAGE_KEY]: payload });
     return { ok: true };
   } catch (e) {
     const message = e instanceof Error ? e.message : "Unknown storage error";
@@ -56,8 +57,8 @@ export async function getParsedListing(): Promise<GetResult> {
     return { ok: false, error: "Storage not available" };
   }
   try {
-    const out = await chrome.storage.local.get(STORAGE_KEY);
-    const raw = out[STORAGE_KEY];
+    const out = await chrome.storage.local.get(PARSED_LISTING_STORAGE_KEY);
+    const raw = out[PARSED_LISTING_STORAGE_KEY];
     if (raw == null) {
       return { ok: false, error: "No parsed listing stored" };
     }
@@ -85,7 +86,7 @@ export async function clearParsedListing(): Promise<ClearResult> {
     return { ok: false, error: "Storage not available" };
   }
   try {
-    await chrome.storage.local.remove(STORAGE_KEY);
+    await chrome.storage.local.remove(PARSED_LISTING_STORAGE_KEY);
     return { ok: true };
   } catch (e) {
     const message = e instanceof Error ? e.message : "Unknown storage error";

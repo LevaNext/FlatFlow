@@ -8,7 +8,8 @@ export const ParserErrorCode = {
   IMAGE_NOT_FOUND: "IMAGE_NOT_FOUND",
 } as const;
 
-export type ParserErrorCodeType = (typeof ParserErrorCode)[keyof typeof ParserErrorCode];
+export type ParserErrorCodeType =
+  (typeof ParserErrorCode)[keyof typeof ParserErrorCode];
 
 export interface ParserErrorDetail {
   code: ParserErrorCodeType;

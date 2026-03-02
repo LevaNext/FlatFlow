@@ -8,8 +8,10 @@ interface ParsingErrorsProps {
 /**
  * Displays parsing errors for the Errors tab or inline. No upload or form logic.
  */
-export function ParsingErrors({ errors }: ParsingErrorsProps): React.ReactElement {
-  if (errors.length === 0) return <></>;
+export function ParsingErrors({
+  errors,
+}: Readonly<ParsingErrorsProps>): React.ReactElement | null {
+  if (errors.length === 0) return null;
 
   return (
     <div className="space-y-2">

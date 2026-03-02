@@ -15,7 +15,9 @@ interface ListingPreviewProps {
 /**
  * Displays parsed listing data. No upload or form logic.
  */
-export function ListingPreview({ listing }: ListingPreviewProps): React.ReactElement {
+export function ListingPreview({
+  listing,
+}: ListingPreviewProps): React.ReactElement {
   const imageUrl = listing.imageUrl ?? FALLBACK_IMAGE;
   const title = listing.title ?? "Untitled listing";
   const hasPrice = listing.price != null;
