@@ -1,15 +1,7 @@
-import {
-  AlertCircle,
-  Link as LinkIcon,
-  Moon,
-  Search,
-  Settings,
-  Sun,
-} from "lucide-react";
+import { AlertCircle, Moon, Settings, Sun } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import "../index.css";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -19,7 +11,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { detectSite, type SiteId } from "@/parsing";
@@ -58,12 +49,6 @@ function UploadButtons({
       >
         Upload to MyHome
       </Button>
-      <Button size="sm" variant="outline" disabled className="w-full">
-        Upload to ss.ge{" "}
-        <Badge variant="secondary" className="ml-1.5">
-          Coming soon
-        </Badge>
-      </Button>
     </div>
   );
 }
@@ -79,7 +64,6 @@ const LANGUAGE_LABELS: Record<Language, string> = {
 function Popup(): React.ReactElement {
   const [theme, setTheme] = useState<Theme>("dark");
   const [language, setLanguage] = useState<Language>("en");
-  const [pastedUrl, setPastedUrl] = useState("");
   const [siteId, setSiteId] = useState<SiteId | null>(null);
   const [listing, setListing] = useState<ListingData | null>(null);
   const [parsingErrors, setParsingErrors] = useState<ParserError[]>([]);
@@ -258,32 +242,6 @@ function Popup(): React.ReactElement {
     requestListingFromCurrentTab();
   }, [requestListingFromCurrentTab]);
 
-  const handleDetectCurrentPage = useCallback(() => {
-    requestListingFromCurrentTab();
-  }, [requestListingFromCurrentTab]);
-
-  const handleDetectPastedUrl = useCallback(() => {
-    const trimmed = pastedUrl.trim();
-    setError(null);
-    setListing(null);
-    setSiteId(null);
-    if (!trimmed) {
-      setError("Please paste a URL");
-      addError("Please paste a URL");
-      return;
-    }
-    const detected = detectSite(trimmed);
-    setSiteId(detected);
-    if (detected === "unsupported") {
-      setError("This website is not supported yet");
-      addError("Unsupported website");
-    } else if (detected === "ss") {
-      setError(SS_COMING_SOON);
-    } else {
-      setError("Open this URL in a tab and use Current Page to parse the listing.");
-    }
-  }, [pastedUrl, addError]);
-
   const handleUploadMyHome = useCallback(() => {
     if (typeof chrome !== "undefined" && chrome.tabs) {
       chrome.tabs.create({ url: MYHOME_STATEMENT_URL });
@@ -425,12 +383,9 @@ function Popup(): React.ReactElement {
         </DropdownMenu>
       </div>
       <Tabs defaultValue="current" className="flex flex-1 flex-col px-3 py-2">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="current" className="text-xs">
             Current Page
-          </TabsTrigger>
-          <TabsTrigger value="paste" className="text-xs">
-            Paste URL
           </TabsTrigger>
           <TabsTrigger value="errors" className="text-xs">
             Errors
@@ -440,48 +395,7 @@ function Popup(): React.ReactElement {
           value="current"
           className="mt-3 flex flex-1 flex-col gap-3"
         >
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleDetectCurrentPage}
-            className="w-full"
-          >
-            <Search className="mr-2 size-4" />
-            Detect Current Page
-          </Button>
           {renderCurrentPageContent()}
-        </TabsContent>
-        <TabsContent value="paste" className="mt-3 flex flex-1 flex-col gap-3">
-          <Input
-            placeholder="Paste listing URL..."
-            value={pastedUrl}
-            onChange={(e) => setPastedUrl(e.target.value)}
-            className="h-9"
-          />
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleDetectPastedUrl}
-            className="w-full"
-          >
-            <LinkIcon className="mr-2 size-4" />
-            Detect Listing
-          </Button>
-          {error && (
-            <p className="text-sm text-destructive">{error}</p>
-          )}
-          {siteId === "ss" && (
-            <>
-              <p className="text-sm text-muted-foreground">{SS_COMING_SOON}</p>
-              <UploadButtons siteId={siteId} onMyHomeClick={handleUploadMyHome} />
-            </>
-          )}
-          {siteId === "unsupported" && (
-            <>
-              <UnsupportedMessage />
-              <UploadButtons siteId={siteId} onMyHomeClick={handleUploadMyHome} />
-            </>
-          )}
         </TabsContent>
         <TabsContent value="errors" className="mt-3 flex-1 overflow-auto">
           {errorsList.length === 0 ? (

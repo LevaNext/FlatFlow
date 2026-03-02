@@ -38,6 +38,7 @@ export function parseListing(
       ...(data.title !== undefined && { title: data.title }),
       ...(data.price !== undefined && { price: data.price }),
       ...(data.imageUrl !== undefined && { imageUrl: data.imageUrl }),
+      ...(data.imageUrls !== undefined && { imageUrls: data.imageUrls }),
     };
     return { listing, errors };
   } catch {

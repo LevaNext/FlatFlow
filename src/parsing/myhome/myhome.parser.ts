@@ -1,6 +1,6 @@
 import type { ListingData } from "@/types/listing";
 import type { ParserError, ParserOutput } from "@/types/parser";
-import { getImage } from "./selectors/getImage";
+import { getImage, getImages } from "./selectors/getImage";
 import { getPrice } from "./selectors/getPrice";
 import { getTitle } from "./selectors/getTitle";
 
@@ -28,9 +28,15 @@ export function parseMyHomeListing(doc: Document): ParserOutput<ListingData> {
   }
 
   const imageResult = getImage(doc);
+  const imageUrls = getImages(doc);
+  if (imageUrls.length > 0) {
+    data.imageUrls = imageUrls;
+    data.imageUrl = imageUrls[0];
+  }
   if (imageResult.ok) {
-    data.imageUrl = imageResult.value;
-  } else {
+    data.imageUrl = data.imageUrl ?? imageResult.value;
+    if (!data.imageUrls?.length) data.imageUrls = [imageResult.value];
+  } else if (imageUrls.length === 0) {
     errors.push(toParserError(imageResult));
   }
 

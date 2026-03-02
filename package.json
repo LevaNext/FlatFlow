@@ -6,7 +6,7 @@
   "packageManager": "pnpm@9.15.0",
   "scripts": {
     "dev": "vite --open",
-    "build": "tsc -b && vite build && vite build --config vite.content.config.ts",
+    "build": "tsc -b && vite build && vite build --config vite.content.config.ts && vite build --config vite.background.config.ts",
     "build:extension": "pnpm run build && echo 'Load unpacked extension from: dist/'",
     "check": "biome check .",
     "check:fix": "biome check --write .",

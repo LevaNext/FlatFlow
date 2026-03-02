@@ -14,5 +14,7 @@ export interface ListingData {
   title?: string;
   price?: ListingPrice;
   imageUrl?: string;
+  /** All gallery image URLs (full-size). Used for statement form photo upload. */
+  imageUrls?: string[];
   source: ListingSource;
 }
