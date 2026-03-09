@@ -18,9 +18,21 @@ export default defineConfig({
         entryFileNames: "assets/[name]-[hash].js",
         chunkFileNames: "assets/[name]-[hash].js",
         assetFileNames: "assets/[name]-[hash][extname]",
+        manualChunks(id) {
+          if (id.includes("node_modules")) {
+            if (id.includes("react") || id.includes("react-dom")) {
+              return "vendor-react";
+            }
+            if (id.includes("@radix-ui")) {
+              return "vendor-ui";
+            }
+            return "vendor";
+          }
+        },
       },
     },
     outDir: "dist",
     emptyOutDir: true,
+    chunkSizeWarningLimit: 4096,
   },
 });

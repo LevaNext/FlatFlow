@@ -1,13 +1,13 @@
 /**
  * Storage for parsed listing data only. No upload or form logic.
- * Safe to call from popup, content scripts, or background.
+ * Safe to call from side panel, content scripts, or background.
  * Uses chrome.storage.local only.
  */
 
 import type { ListingData, ListingSource } from "@/types/listing";
 import type { ParserError } from "@/types/parser";
 
-/** Single source for the chrome.storage.local key used by popup and content script. */
+/** Single source for the chrome.storage.local key used by side panel and content script. */
 export const PARSED_LISTING_STORAGE_KEY = "parsedListing";
 
 export interface ParsedListingMeta {
@@ -32,7 +32,7 @@ function hasChromeStorage(): boolean {
 }
 
 /**
- * Save parsed listing to chrome.storage.local. Call from popup/orchestrator after parsing.
+ * Save parsed listing to chrome.storage.local. Call from side panel/orchestrator after parsing.
  */
 export async function saveParsedListing(
   payload: ParsedListingPayload,
@@ -50,7 +50,7 @@ export async function saveParsedListing(
 }
 
 /**
- * Read parsed listing from chrome.storage.local. Safe for popup or future uploader.
+ * Read parsed listing from chrome.storage.local. Safe for side panel or future uploader.
  */
 export async function getParsedListing(): Promise<GetResult> {
   if (!hasChromeStorage()) {

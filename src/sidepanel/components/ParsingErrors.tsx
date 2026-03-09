@@ -1,4 +1,5 @@
 import { AlertCircle } from "lucide-react";
+import { useTranslation } from "@/i18n";
 import type { ParserError } from "@/types/parser";
 
 interface ParsingErrorsProps {
@@ -11,12 +12,13 @@ interface ParsingErrorsProps {
 export function ParsingErrors({
   errors,
 }: Readonly<ParsingErrorsProps>): React.ReactElement | null {
+  const { t } = useTranslation();
   if (errors.length === 0) return null;
 
   return (
     <div className="space-y-2">
       <p className="text-xs font-medium text-muted-foreground">
-        Parsing issues:
+        {t("parsingIssues.label")}
       </p>
       <ul className="space-y-1.5">
         {errors.map((e, i) => (

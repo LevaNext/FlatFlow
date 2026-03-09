@@ -3,9 +3,9 @@
 @tailwind utilities;
 
 /*
-  Single global theme (app + extension popup).
+  Single global theme (app + Chrome side panel).
   Preset: base=radix, style=mira, baseColor=gray, theme=blue, radius=default.
-  Popup imports this file via: import "../index.css"
+  Side panel imports this file via: import "../index.css"
 */
 @layer base {
   :root {
@@ -63,9 +63,9 @@
   }
 
   /*
-   * Side panel: full width and height; #app-container fills the panel.
+   * Chrome side panel: full width and height; #app-container fills the panel.
    */
-  html.popup-html {
+  html.side-panel-html {
     margin: 0;
     padding: 0;
     background: transparent;
@@ -73,7 +73,7 @@
     width: 100%;
     height: 100%;
   }
-  html.popup-html body.popup-page {
+  html.side-panel-html body.side-panel-page {
     margin: 0;
     padding: 0;
     background: transparent;
@@ -104,12 +104,12 @@
 }
 
 @layer components {
-  /* Popup root: subtle shadow only (no border) */
-  .popup-root-shadow {
+  /* Side panel root: subtle shadow only (no border) */
+  .side-panel-root-shadow {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   }
 
-  .dark .popup-root-shadow {
+  .dark .side-panel-root-shadow {
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   }
 }

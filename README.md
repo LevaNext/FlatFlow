@@ -28,7 +28,7 @@ FlatFlow/
 │   │   ├── messages.ts      # Message types
 │   │   └── README.md
 │   ├── parsing/             # DOM parsers by site (myhome, ss)
-│   ├── popup/               # Side panel UI (Popup.tsx + components)
+│   ├── sidepanel/           # Chrome side panel UI (SidePanel.tsx + components)
 │   ├── storage/             # Parsed listing storage
 │   ├── components/ui/       # Shared Shadcn UI primitives
 │   ├── lib/                 # Utils (e.g. cn for Shadcn)
@@ -81,9 +81,9 @@ Components are added under `src/components/ui/`. Path alias `@/` points to `src/
 
 ## Extension (Chrome Manifest v3)
 
-The extension uses a **side panel** (React UI from `src/popup/Popup.tsx`) and a **content script** for listing parsing and statement form fill.
+The extension uses a **Chrome side panel** (React UI from `src/sidepanel/SidePanel.tsx`) and a **content script** for listing parsing and statement form fill.
 
-- **Side panel:** `index.html` → Vite app → `src/main.tsx` mounts `src/popup/Popup.tsx` (runs when the panel is opened).
+- **Side panel:** `index.html` → Vite app → `src/main.tsx` mounts `src/sidepanel/SidePanel.tsx` (runs when the panel is opened).
 - **Content script:** `src/extension/content.ts` → `dist/content.js` (runs on myhome.ge, ss.ge, statements.myhome.ge; parses listing DOM and fills statement form from storage).
 - **Background:** `src/extension/background.ts` → `dist/background.js` (service worker; e.g. fetches images for photo upload).
 - **Manifest:** `public/manifest.json` (copied to `dist/`)

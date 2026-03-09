@@ -1,13 +1,13 @@
 # Side Panel Migration
 
-The extension uses the **Chrome Side Panel API** instead of the action popup, so the UI stays open when clicking outside. The same UI that previously ran in the popup (parsing, upload, settings) now runs in the side panel.
+The extension uses the **Chrome Side Panel API** (Manifest v3); the UI runs in the side panel (no action popup).
 
 ## Summary of changes
 
 - **manifest.json**: No `default_popup`; `side_panel.default_path` is `"index.html"`; `sidePanel` permission added.
 - **background.ts**: `chrome.action.onClicked` opens the side panel via `chrome.sidePanel.open({ tabId })`.
-- **Entry point**: `index.html` loads `main.tsx`, which mounts the **Popup** component (`src/popup/Popup.tsx`) — the full extension UI. Popup is the single app entry; the legacy `App` component is unused.
-- **Vite**: Single build entry `index.html`; `popup.html` removed. `base: "./"` keeps extension asset URLs correct.
+- **Entry point**: `index.html` loads `main.tsx`, which mounts the **SidePanel** component (`src/sidepanel/SidePanel.tsx`) — the full extension UI. SidePanel is the single app entry; the legacy `App` component is unused.
+- **Vite**: Single build entry `index.html`; `base: "./"` keeps extension asset URLs correct.
 
 ## How to test in Chrome
 
@@ -24,7 +24,7 @@ The extension uses the **Chrome Side Panel API** instead of the action popup, so
 3. **Open the side panel**
    - Go to any tab (e.g. a supported listing site)
    - Click the FlatFlow icon in the toolbar  
-   → The side panel opens with the full extension UI (same as the previous popup).
+   → The side panel opens with the full extension UI.
    - You can also right‑click the icon → "Open side panel" if your Chrome version shows it.
 
 4. **Verify behavior**
@@ -41,8 +41,8 @@ The side panel is **enabled only on myhome.ge and www.myhome.ge** (http or https
 
 ## Common MV3 + Side Panel pitfalls
 
-1. **`action.onClicked` only fires when there is no popup**  
-   After removing `default_popup`, the icon click is handled by your background script. If you ever re-add a popup, the click will open the popup and `onClicked` will not run.
+1. **`action.onClicked` only fires when there is no default popup**  
+   With no `default_popup`, the icon click is handled by the background script. If you re-add a popup in the manifest, the click would open the popup and `onClicked` would not run.
 
 2. **Tab context**  
    `chrome.sidePanel.open({ tabId })` opens the panel for that tab. The side panel page runs in extension context; use messaging (e.g. `chrome.tabs.sendMessage`, `chrome.runtime.sendMessage`) to talk to the active tab or content scripts.

@@ -5,6 +5,8 @@
 
 import { useCallback } from "react";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/i18n";
+import { getLogoUrl } from "@/utils/logo";
 import {
   Empty,
   EmptyContent,
@@ -16,14 +18,8 @@ import {
 
 const MYHOME_URL = "https://www.myhome.ge";
 
-function getLogoUrl(): string {
-  if (typeof chrome !== "undefined" && chrome.runtime?.getURL) {
-    return chrome.runtime.getURL("icons/icon128.png");
-  }
-  return "/icons/icon128.png";
-}
-
 export function UnsupportedSiteView(): React.ReactElement {
+  const { t } = useTranslation();
   const goToMyHome = useCallback(() => {
     if (typeof chrome === "undefined" || !chrome.tabs) return;
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -35,26 +31,23 @@ export function UnsupportedSiteView(): React.ReactElement {
   }, []);
 
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden border-0 bg-background font-sans text-foreground popup-root-shadow">
+    <div className="flex h-full w-full flex-col overflow-hidden border-0 bg-background font-sans text-foreground side-panel-root-shadow">
       <Empty>
         <EmptyHeader>
           <EmptyMedia>
             <img
               src={getLogoUrl()}
-              alt=""
-              className="h-16 w-16 rounded-full object-contain"
-              width={64}
+              alt={t("common.altLogo")}
+              className="h-16 w-auto max-w-[200px] object-contain object-center"
+              width={200}
               height={64}
             />
           </EmptyMedia>
-          <EmptyTitle>Unsupported Website</EmptyTitle>
-          <EmptyDescription>
-            Side detection could not be completed. This extension only supports
-            myhome.ge.
-          </EmptyDescription>
+          <EmptyTitle>{t("unsupported.title")}</EmptyTitle>
+          <EmptyDescription>{t("unsupported.description")}</EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
-          <Button onClick={goToMyHome}>Go to MyHome</Button>
+          <Button onClick={goToMyHome}>{t("unsupported.goToMyHome")}</Button>
         </EmptyContent>
       </Empty>
     </div>

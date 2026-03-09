@@ -1,0 +1,68 @@
+{
+  "app": {
+    "title": "FlatFlow",
+    "settings": "Настройки",
+    "settingsAria": "Настройки"
+  },
+  "theme": {
+    "label": "Тема",
+    "dark": "Тёмная",
+    "light": "Светлая"
+  },
+  "lang": {
+    "ka": "Грузинский",
+    "en": "English",
+    "ru": "Русский",
+    "shortKa": "ქართ",
+    "shortEn": "EN",
+    "shortRu": "RU"
+  },
+  "upload": {
+    "myHome": "Загрузить в MyHome"
+  },
+  "status": {
+    "parsing": "Загрузка объявления…",
+    "checking": "Проверка…",
+    "ssComingSoon": "SS.ge скоро"
+  },
+  "errors": {
+    "failedParse": "Не удалось загрузить объявление",
+    "refreshPage": "Не удалось прочитать страницу. Обновите страницу объявления и попробуйте снова.",
+    "contentInjection": "Не удалось внедрить скрипт",
+    "contentScript": "Ошибка скрипта",
+    "extensionContext": "Контекст расширения недоступен",
+    "noUrl": "URL недоступен",
+    "unsupportedSite": "Этот сайт пока не поддерживается",
+    "unsupportedWebsite": "Неподдерживаемый сайт",
+    "couldNotAccessTab": "Не удалось получить доступ к вкладке",
+    "storage": "Хранилище"
+  },
+  "tabs": {
+    "currentPage": "Текущая страница",
+    "errors": "Ошибки",
+    "noErrorsYet": "Ошибок пока нет."
+  },
+  "unsupported": {
+    "title": "Неподдерживаемый сайт",
+    "description": "Не удалось определить сайт. Это расширение поддерживает только myhome.ge.",
+    "goToMyHome": "Перейти на MyHome",
+    "message": "Этот сайт пока не поддерживается"
+  },
+  "selectListing": {
+    "title": "Выберите объявление",
+    "description": "Вы на главной странице MyHome. Перейдите на страницу объявления, которое хотите загрузить."
+  },
+  "statementSuccess": {
+    "title": "Отлично!",
+    "description": "Хорошая работа — вы уже заполняете объявление с моей помощью."
+  },
+  "parsingIssues": {
+    "label": "Проблемы разбора:"
+  },
+  "listing": {
+    "untitled": "Объявление без названия"
+  },
+  "common": {
+    "altLogo": "FlatFlow"
+  }
+}

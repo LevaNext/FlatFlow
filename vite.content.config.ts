@@ -3,7 +3,7 @@ import { defineConfig } from "vite";
 
 /**
  * Content script is built as IIFE so Chrome can run it without type="module".
- * Main app (popup/index) is built by the default vite.config.ts.
+ * Main app (side panel / index) is built by the default vite.config.ts.
  */
 export default defineConfig({
   resolve: {
