@@ -19,10 +19,14 @@ function findMetaContainer(doc: Document): Element | null {
     if (!classList.includes("gap-6")) continue;
     const spans = el.querySelectorAll(":scope > span");
     if (spans.length < 2) continue;
-    const texts = Array.from(spans).map((s) => getText(s).trim()).filter(Boolean);
+    const texts = Array.from(spans)
+      .map((s) => getText(s).trim())
+      .filter(Boolean);
     const hasId = texts.some((t) => /^ID:\s*\d+$/i.test(t));
     const hasNumber = texts.some((t) => /^\d+$/.test(t));
-    const hasDate = texts.some((t) => /დღეს|ზე|:\d{2}/.test(t) || (t.includes(":") && /\d/.test(t)));
+    const hasDate = texts.some(
+      (t) => /დღეს|ზე|:\d{2}/.test(t) || (t.includes(":") && /\d/.test(t)),
+    );
     if (hasId || hasNumber || hasDate) return el;
   }
   return null;
@@ -40,7 +44,10 @@ function parseMetaContainer(container: Element): Partial<ListingMeta> {
     } else if (/^\d+$/.test(text)) {
       const n = Number.parseInt(text, 10);
       if (!Number.isNaN(n)) out.views = n;
-    } else if (/დღეს|ზე|:\d{1,2}/.test(text) || (text.includes(":") && /\d/.test(text))) {
+    } else if (
+      /დღეს|ზე|:\d{1,2}/.test(text) ||
+      (text.includes(":") && /\d/.test(text))
+    ) {
       out.listedAt = text;
     }
   }

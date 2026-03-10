@@ -3,7 +3,11 @@
  * On myhome.ge → open panel. Otherwise (any other site, new tab, about:blank, invalid) → redirect to myhome.ge.
  */
 
-import { MESSAGE_CLOSE_SIDE_PANEL, MESSAGE_FETCH_IMAGES, MESSAGE_PANEL_CLOSED } from "./messages";
+import {
+  MESSAGE_CLOSE_SIDE_PANEL,
+  MESSAGE_FETCH_IMAGES,
+  MESSAGE_PANEL_CLOSED,
+} from "./messages";
 
 const MYHOME_URL = "https://www.myhome.ge";
 const STORAGE_KEY_SIDE_PANEL_OPEN = "sidePanelOpen";
@@ -59,12 +63,18 @@ chrome.action.onClicked.addListener((tab) => {
       const isPanelOpen = result?.[STORAGE_KEY_SIDE_PANEL_OPEN] === true;
       if (isPanelOpen) {
         console.log("[FlatFlow] panel close requested");
-        chrome.runtime.sendMessage({ type: MESSAGE_CLOSE_SIDE_PANEL }).catch(() => {});
-        void chrome.storage.session.set({ [STORAGE_KEY_SIDE_PANEL_OPEN]: false });
+        chrome.runtime
+          .sendMessage({ type: MESSAGE_CLOSE_SIDE_PANEL })
+          .catch(() => {});
+        void chrome.storage.session.set({
+          [STORAGE_KEY_SIDE_PANEL_OPEN]: false,
+        });
       } else if (tabId !== undefined) {
         console.log("[FlatFlow] panel opened");
         chrome.sidePanel.open({ tabId });
-        void chrome.storage.session.set({ [STORAGE_KEY_SIDE_PANEL_OPEN]: true });
+        void chrome.storage.session.set({
+          [STORAGE_KEY_SIDE_PANEL_OPEN]: true,
+        });
       }
     });
     return;

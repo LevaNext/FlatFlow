@@ -30,8 +30,13 @@ const MYHOME_STATEMENT_URL =
 const STORAGE_KEY_SIDE_PANEL_OPEN = "sidePanelOpen";
 
 function SidePanel(): React.ReactElement {
-  const { isSupported, isStatementPage, isMyHomeRoot, isLoading } =
-    useActiveTabDomain();
+  const {
+    isSupported,
+    isStatementPage,
+    isMyHomeRoot,
+    isListingDetailPage,
+    isLoading,
+  } = useActiveTabDomain();
   const [theme, setTheme] = useState<Theme>("dark");
   const [language, setLanguage] = useState<Language>("ka");
   const [siteId, setSiteId] = useState<SiteId | null>(null);
@@ -71,7 +76,9 @@ function SidePanel(): React.ReactElement {
 
     const onPageHide = () => {
       void chrome.storage.session.set({ [STORAGE_KEY_SIDE_PANEL_OPEN]: false });
-      chrome.runtime.sendMessage({ type: MESSAGE_PANEL_CLOSED }).catch(() => {});
+      chrome.runtime
+        .sendMessage({ type: MESSAGE_PANEL_CLOSED })
+        .catch(() => {});
     };
 
     chrome.runtime.onMessage.addListener(onMessage);
@@ -234,11 +241,11 @@ function SidePanel(): React.ReactElement {
     );
   }, [trySendParseMessage, tForLang]);
 
-  // When the active tab is myhome.ge with a path (listing page), parse listing. Skip at root (isMyHomeRoot).
+  // Only on myhome.ge/pr/... (listing detail page): show debounce loader and parse. Other myhome pages show "Select a listing".
   useEffect(() => {
-    if (!isSupported || isMyHomeRoot) return;
+    if (!isListingDetailPage) return;
     requestListingFromCurrentTab();
-  }, [isSupported, isMyHomeRoot, requestListingFromCurrentTab]);
+  }, [isListingDetailPage, requestListingFromCurrentTab]);
 
   const handleUploadMyHome = useCallback(() => {
     if (typeof chrome === "undefined" || !chrome.tabs) return;
@@ -317,10 +324,10 @@ function SidePanel(): React.ReactElement {
     if (isStatementPage) {
       return <StatementSuccessView />;
     }
-    if (isMyHomeRoot) {
+    if (isMyHomeRoot || !isListingDetailPage) {
       return <SelectListingView />;
     }
-    // myhome.ge with path (listing pages) → listing card + upload
+    // myhome.ge/pr/... (listing detail only) → debounce loader then listing card + upload
     return (
       <div className="flex flex-1 flex-col gap-3 overflow-auto px-3 py-2">
         {renderCurrentPageContent()}

@@ -32,7 +32,8 @@ function findAttributesGrid(doc: Document): Element | null {
 }
 
 function parseArea(value: string): number | undefined {
-  const match = /([\d.,]+)\s*მ²?/i.exec(value) || /^([\d.,]+)$/.exec(value.trim());
+  const match =
+    /([\d.,]+)\s*მ²?/i.exec(value) || /^([\d.,]+)$/.exec(value.trim());
   if (!match) return undefined;
   const n = Number.parseFloat(match[1].replace(",", "."));
   return Number.isNaN(n) ? undefined : n;

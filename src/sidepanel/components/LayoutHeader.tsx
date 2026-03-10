@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -43,9 +42,6 @@ export function LayoutHeader({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56 p-2">
-          <DropdownMenuLabel className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
-            {t("theme.label")}
-          </DropdownMenuLabel>
           <ToggleGroup
             type="single"
             value={theme}

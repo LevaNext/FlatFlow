@@ -3,8 +3,8 @@
  * Renders only this UI (no tabs, no app content). Positive, friendly message.
  */
 
+import { Smile } from "lucide-react";
 import { useTranslation } from "@/i18n";
-import { getLogoUrl } from "@/utils/logo";
 import {
   Empty,
   EmptyDescription,
@@ -19,12 +19,10 @@ export function StatementSuccessView(): React.ReactElement {
     <Empty className="flex-1 overflow-auto">
       <EmptyHeader>
         <EmptyMedia>
-          <img
-            src={getLogoUrl()}
-            alt={t("common.altLogo")}
-            className="h-16 w-auto max-w-[200px] object-contain object-center"
-            width={200}
-            height={64}
+          <Smile
+            className="h-16 w-16 text-primary"
+            strokeWidth={1.5}
+            aria-hidden
           />
         </EmptyMedia>
         <EmptyTitle>{t("statementSuccess.title")}</EmptyTitle>

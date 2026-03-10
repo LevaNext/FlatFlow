@@ -53,8 +53,8 @@
     "description": "You're currently on the MyHome homepage. Please navigate to the specific listing page you want to upload."
   },
   "statementSuccess": {
-    "title": "You're doing great!",
-    "description": "Nice job — you're already filling out a listing with my help."
+    "title": "You successfully completed the application.",
+    "description": "Thank you for using FlatFlow."
   },
   "parsingIssues": {
     "label": "Parsing issues:"

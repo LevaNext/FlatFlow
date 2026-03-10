@@ -30,8 +30,9 @@ function getDomainFromUrl(url: string | undefined): string | null {
   }
 }
 
+/** True for myhome.ge and statements.myhome.ge (so panel shows app UI or statement success). */
 function isSupportedDomain(domain: string | null): boolean {
-  return domain === SUPPORTED_DOMAIN;
+  return domain === SUPPORTED_DOMAIN || domain === STATEMENT_DOMAIN;
 }
 
 function isStatementPageDomain(domain: string | null): boolean {
@@ -53,6 +54,15 @@ function isRootPath(pathname: string | null): boolean {
   if (pathname == null) return false;
   const p = pathname.trim();
   return p === "" || p === "/";
+}
+
+/** True when on myhome.ge listing detail page (path contains /pr/). Only then show debounce loader and parse. */
+function isListingDetailPath(
+  pathname: string | null,
+  domain: string | null,
+): boolean {
+  if (domain !== SUPPORTED_DOMAIN || pathname == null) return false;
+  return pathname.toLowerCase().includes("/pr/");
 }
 
 function queryActiveTab(): Promise<{
@@ -84,6 +94,8 @@ export interface UseActiveTabDomainResult {
   isStatementPage: boolean;
   /** True when on myhome.ge at root only (pathname "/" or ""); show "Select a Listing" empty state */
   isMyHomeRoot: boolean;
+  /** True when on myhome.ge listing detail page (path contains /pr/); only then show debounce loader and parse */
+  isListingDetailPage: boolean;
   /** Current tab URL when available; use as dependency to re-run effects when URL changes (e.g. navigate within myhome) */
   tabUrl: string | null;
   /** True until the first tab query has completed (avoids flashing Unsupported when actually on myhome.ge) */
@@ -133,12 +145,14 @@ export function useActiveTabDomain(): UseActiveTabDomainResult {
   const isSupported = isSupportedDomain(domain);
   const isStatementPage = isStatementPageDomain(domain);
   const isMyHomeRoot = domain === SUPPORTED_DOMAIN && isRootPath(pathname);
+  const isListingDetailPage = isListingDetailPath(pathname, domain);
 
   return {
     domain,
     isSupported,
     isStatementPage,
     isMyHomeRoot,
+    isListingDetailPage,
     tabUrl,
     isLoading,
     refresh: update,

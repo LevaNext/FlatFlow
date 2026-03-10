@@ -15,7 +15,7 @@ function getLogoUrl(): string {
 }
 
 const DEFAULT_DEBOUNCE_MS = 900;
-const DEFAULT_TIMEOUT_MS = 30_000;
+const DEFAULT_TIMEOUT_MS = 10_000;
 
 export interface WaitForPageReadyOptions {
   /** CSS selectors; at least one must match for page to be considered ready. */
@@ -72,6 +72,8 @@ function createOverlay(doc: Document): () => void {
     fontSize: "18px",
     color: "#fff",
     pointerEvents: "auto",
+    userSelect: "none",
+    WebkitUserSelect: "none",
   });
 
   const logoWrap = doc.createElement("div");
@@ -91,10 +93,25 @@ function createOverlay(doc: Document): () => void {
   }
   wrap.appendChild(logoWrap);
 
+  const body = doc.body;
+  const prevPointerEvents = body.style.pointerEvents;
+  const prevUserSelect = body.style.userSelect;
+  const prevWebkitUserSelect = body.style.getPropertyValue(
+    "-webkit-user-select",
+  );
+  body.style.pointerEvents = "none";
+  body.style.userSelect = "none";
+  body.style.setProperty("-webkit-user-select", "none");
+
   doc.head.appendChild(style);
-  doc.body.appendChild(wrap);
+  body.appendChild(wrap);
 
   return () => {
+    body.style.pointerEvents = prevPointerEvents;
+    body.style.userSelect = prevUserSelect;
+    if (prevWebkitUserSelect)
+      body.style.setProperty("-webkit-user-select", prevWebkitUserSelect);
+    else body.style.removeProperty("-webkit-user-select");
     style.remove();
     wrap.remove();
   };
