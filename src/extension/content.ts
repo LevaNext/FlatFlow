@@ -7,7 +7,9 @@
 import { fillMyHomeStatementForm } from "@/extension/fill/myhome";
 import { fillSsStatementForm } from "@/extension/fill/ss";
 import type { StatementFormPayload } from "@/extension/fill/types";
+import { LISTING_READY_SELECTORS } from "@/extension/listingReadySelectors";
 import { MESSAGE_PARSE_LISTING } from "@/extension/messages";
+import { waitForPageReady } from "@/extension/waitForPageReady";
 import { detectSite, parseListing, type SiteId } from "@/parsing";
 import { PARSED_LISTING_STORAGE_KEY } from "@/storage/parsedListingStorage";
 
@@ -121,11 +123,18 @@ if (isStatementCreatePage()) {
         return true;
       }
 
-      const { listing, errors } = parseListing("myhome", document);
-      sendResponse({
-        listing,
-        errors,
-        ...(listing ? {} : { error: "Failed to parse listing" }),
+      const selectors = LISTING_READY_SELECTORS[site] ?? [];
+      void waitForPageReady(document, {
+        selectors,
+        debounceMs: 900,
+        timeoutMs: 30_000,
+      }).then(() => {
+        const { listing, errors } = parseListing("myhome", document);
+        sendResponse({
+          listing,
+          errors,
+          ...(listing ? {} : { error: "Failed to parse listing" }),
+        });
       });
       return true;
     },

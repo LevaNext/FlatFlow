@@ -5,10 +5,11 @@ import { getText, queryAll, queryOne } from "./dom";
 /**
  * Address block: location for listing preview card.
  * Structure: div.flex.flex-col.items-start > div.flex.items-center.gap-2.mt-2 (with location pin svg + span).
- * e.g. <div class="flex flex-col items-start"><div class="flex items-center gap-2 mt-2 text-xs md:text-sm"><svg>...</svg><span>გრიგოლ ლორთქიფანიძის ქუჩა </span></div></div>
+ * e.g. <span>ჯავახეთის ქ. 58ა</span> or <span>გრიგოლ ლორთქიფანიძის ქუჩა</span>
  */
 const ADDRESS_CONTAINER_SELECTORS = [
   "div.flex.flex-col.items-start div.flex.items-center.gap-2.mt-2 span",
+  "div.flex.flex-col.items-start div.flex.items-center.mt-2 span",
   "div.flex.flex-col.items-start div.flex.items-center.gap-2 span",
   "div.flex.items-center.gap-2.mt-2 span",
   "div[class*='items-start'] div[class*='gap-2'] span",

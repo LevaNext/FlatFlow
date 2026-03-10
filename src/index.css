@@ -112,4 +112,18 @@
   .dark .side-panel-root-shadow {
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   }
+
+  /* Bounce animation for loading logo (side panel + overlay) */
+  @keyframes flatflow-bounce {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-12px);
+    }
+  }
+  .flatflow-loading-logo {
+    animation: flatflow-bounce 0.9s ease-in-out infinite;
+  }
 }

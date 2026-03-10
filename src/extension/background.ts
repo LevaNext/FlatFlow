@@ -3,9 +3,10 @@
  * On myhome.ge → open panel. Otherwise (any other site, new tab, about:blank, invalid) → redirect to myhome.ge.
  */
 
-import { MESSAGE_FETCH_IMAGES } from "./messages";
+import { MESSAGE_CLOSE_SIDE_PANEL, MESSAGE_FETCH_IMAGES, MESSAGE_PANEL_CLOSED } from "./messages";
 
 const MYHOME_URL = "https://www.myhome.ge";
+const STORAGE_KEY_SIDE_PANEL_OPEN = "sidePanelOpen";
 
 console.log("[FlatFlow] background loaded");
 
@@ -53,8 +54,19 @@ chrome.action.onClicked.addListener((tab) => {
   console.log("[FlatFlow] parsed hostname:", hostname ?? "(none)");
 
   if (hostname === "myhome.ge") {
-    console.log("[FlatFlow] panel opened");
-    chrome.sidePanel.open({ tabId: tab.id });
+    const tabId = tab.id;
+    chrome.storage.session.get(STORAGE_KEY_SIDE_PANEL_OPEN, (result) => {
+      const isPanelOpen = result?.[STORAGE_KEY_SIDE_PANEL_OPEN] === true;
+      if (isPanelOpen) {
+        console.log("[FlatFlow] panel close requested");
+        chrome.runtime.sendMessage({ type: MESSAGE_CLOSE_SIDE_PANEL }).catch(() => {});
+        void chrome.storage.session.set({ [STORAGE_KEY_SIDE_PANEL_OPEN]: false });
+      } else if (tabId !== undefined) {
+        console.log("[FlatFlow] panel opened");
+        chrome.sidePanel.open({ tabId });
+        void chrome.storage.session.set({ [STORAGE_KEY_SIDE_PANEL_OPEN]: true });
+      }
+    });
     return;
   }
 
@@ -73,10 +85,14 @@ function blobToDataUrl(blob: Blob): Promise<string> {
 
 chrome.runtime.onMessage.addListener(
   (
-    message: { type: string; urls: string[] },
+    message: { type: string; urls?: string[] },
     _sender: chrome.runtime.MessageSender,
     sendResponse: (response: string[] | { error: string }) => void,
   ) => {
+    if (message.type === MESSAGE_PANEL_CLOSED) {
+      void chrome.storage.session.set({ [STORAGE_KEY_SIDE_PANEL_OPEN]: false });
+      return false;
+    }
     if (message.type !== MESSAGE_FETCH_IMAGES || !Array.isArray(message.urls))
       return false;
     const urls = message.urls.slice(0, 16);

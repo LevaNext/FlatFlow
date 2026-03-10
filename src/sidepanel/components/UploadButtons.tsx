@@ -1,3 +1,4 @@
+import { CopyPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/i18n";
 import type { SiteId } from "@/parsing";
@@ -23,6 +24,7 @@ export function UploadButtons({
         disabled={!myHomeEnabled}
         className="w-full"
       >
+        <CopyPlus />
         {t("upload.myHome")}
       </Button>
     </div>

@@ -44,5 +44,11 @@
       "js": ["content.js"],
       "run_at": "document_idle"
     }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["logo.png", "icons/icon16.png", "icons/icon32.png", "icons/icon48.png", "icons/icon128.png"],
+      "matches": ["<all_urls>"]
+    }
   ]
 }

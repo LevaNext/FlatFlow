@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import { MESSAGE_PARSE_LISTING } from "@/extension/messages";
+import {
+  MESSAGE_CLOSE_SIDE_PANEL,
+  MESSAGE_PANEL_CLOSED,
+  MESSAGE_PARSE_LISTING,
+} from "@/extension/messages";
 import { useActiveTabDomain } from "@/hooks/useActiveTabDomain";
 import { type TranslationKey, TranslationProvider, t } from "@/i18n";
 import { detectSite, type SiteId } from "@/parsing";
@@ -12,6 +16,7 @@ import type { ParserError } from "@/types/parser";
 import "../index.css";
 import { type Language, Layout, type Theme } from "./components/Layout";
 import { ListingPreview } from "./components/ListingPreview";
+import { LoadingLogo } from "./components/LoadingLogo";
 import { ParsingErrors } from "./components/ParsingErrors";
 import { SelectListingView } from "./components/SelectListingView";
 import { StatementSuccessView } from "./components/StatementSuccessView";
@@ -21,6 +26,8 @@ import { UploadButtons } from "./components/UploadButtons";
 
 const MYHOME_STATEMENT_URL =
   "https://statements.myhome.ge/ka/statement/create?referrer=myhome";
+
+const STORAGE_KEY_SIDE_PANEL_OPEN = "sidePanelOpen";
 
 function SidePanel(): React.ReactElement {
   const { isSupported, isStatementPage, isMyHomeRoot, isLoading } =
@@ -50,6 +57,31 @@ function SidePanel(): React.ReactElement {
         setSiteId(result.value.meta.source);
       }
     });
+  }, []);
+
+  // Track panel open/closed so extension icon click can toggle (close when open).
+  useEffect(() => {
+    void chrome.storage.session.set({ [STORAGE_KEY_SIDE_PANEL_OPEN]: true });
+
+    const onMessage = (message: { type: string }) => {
+      if (message.type === MESSAGE_CLOSE_SIDE_PANEL) {
+        window.close();
+      }
+    };
+
+    const onPageHide = () => {
+      void chrome.storage.session.set({ [STORAGE_KEY_SIDE_PANEL_OPEN]: false });
+      chrome.runtime.sendMessage({ type: MESSAGE_PANEL_CLOSED }).catch(() => {});
+    };
+
+    chrome.runtime.onMessage.addListener(onMessage);
+    window.addEventListener("pagehide", onPageHide);
+
+    return () => {
+      chrome.runtime.onMessage.removeListener(onMessage);
+      window.removeEventListener("pagehide", onPageHide);
+      void chrome.storage.session.set({ [STORAGE_KEY_SIDE_PANEL_OPEN]: false });
+    };
   }, []);
 
   const tForLang = useCallback(
@@ -221,11 +253,7 @@ function SidePanel(): React.ReactElement {
 
   const renderCurrentPageContent = (): React.ReactElement => {
     if (loading) {
-      return (
-        <p className="text-sm text-muted-foreground">
-          {tForLang("status.parsing")}
-        </p>
-      );
+      return <LoadingLogo />;
     }
     if (siteId === "unsupported") {
       return (
@@ -284,11 +312,7 @@ function SidePanel(): React.ReactElement {
   // Supported: always show layout with header and footer
   const mainContent = (() => {
     if (isLoading) {
-      return (
-        <div className="flex flex-1 items-center justify-center px-3 py-4 text-muted-foreground text-sm">
-          {tForLang("status.checking")}
-        </div>
-      );
+      return <LoadingLogo />;
     }
     if (isStatementPage) {
       return <StatementSuccessView />;
