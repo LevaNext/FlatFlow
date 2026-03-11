@@ -35,4 +35,12 @@ export interface ListingData {
   listedAt?: string | number;
   /** Listing ID on the source site (e.g. "23746578"). */
   id?: string;
+  /** Status from listing (e.g. "ახალი აშენებული"). Used to prefill statement form. */
+  status?: string;
+  /** Condition from listing (e.g. "ახალი გარემონტებული"). Used to prefill statement form. */
+  condition?: string;
+  /** Location derived from title (last word), in ka/en/ru. Default Tbilisi if not in list. */
+  location?: { ka: string; en: string; ru: string };
+  /** Website language when listing was parsed (ka | en | ru). Saved and used for location display. */
+  lang?: "ka" | "en" | "ru";
 }

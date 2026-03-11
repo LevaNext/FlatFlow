@@ -66,6 +66,10 @@ function runFillFromStorage(): void {
               hasPrice: !!payload?.data?.price,
               hasImageUrls: !!payload?.data?.imageUrls,
               imageUrlsLength: payload?.data?.imageUrls?.length ?? 0,
+              status: payload?.data?.status,
+              condition: payload?.data?.condition,
+              location: payload?.data?.location,
+              lang: payload?.data?.lang,
             }
           : "missing",
       );

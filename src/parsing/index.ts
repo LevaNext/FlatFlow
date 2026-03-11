@@ -39,6 +39,10 @@ export function parseListing(
       ...(data.price !== undefined && { price: data.price }),
       ...(data.imageUrl !== undefined && { imageUrl: data.imageUrl }),
       ...(data.imageUrls !== undefined && { imageUrls: data.imageUrls }),
+      ...(data.status !== undefined && { status: data.status }),
+      ...(data.condition !== undefined && { condition: data.condition }),
+      ...(data.location !== undefined && { location: data.location }),
+      ...(data.lang !== undefined && { lang: data.lang }),
     };
     return { listing, errors };
   } catch {

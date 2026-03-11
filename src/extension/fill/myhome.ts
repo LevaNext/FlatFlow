@@ -1,13 +1,20 @@
 /**
- * MyHome statement form fill: price, currency, and photo upload on statements.myhome.ge.
+ * MyHome statement form fill: price, currency, location, and photo upload on statements.myhome.ge.
  */
 
+import { getLocationFromTitle } from "@/data/locations";
 import { MESSAGE_FETCH_IMAGES } from "@/extension/messages";
 import { dataUrlToFile } from "./shared";
 import type { StatementFormPayload } from "./types";
 
+export type StatementPageLang = "ka" | "en" | "ru";
+
 const LOG = (msg: string, ...args: unknown[]) =>
   console.log("[FlatFlow]", msg, ...args);
+
+function normalizeStatusText(s: string): string {
+  return s.replaceAll(/\s+/g, " ").trim();
+}
 
 function setPriceAndCurrency(price: {
   amount: number;
@@ -41,16 +48,190 @@ function setPriceAndCurrency(price: {
 }
 
 /**
- * Fill the MyHome statement create form: total_price input, GEL/USD toggle, then photo upload.
+ * Receives a status name and clicks the corresponding option inside [data-test-id="select-status"].
+ * The visible text is inside a span within the label (e.g. "ძველი აშენებული", "ახალი აშენებული", "მშენებარე").
+ * Works even if the label's `for` attribute values are dynamic.
+ */
+function selectStatus(statusName: string): void {
+  const container = document.querySelector('[data-test-id="select-status"]');
+  if (!container) {
+    LOG("selectStatus: container [data-test-id='select-status'] not found");
+    return;
+  }
+  const want = normalizeStatusText(statusName);
+  if (!want) return;
+  const labels = container.querySelectorAll("label");
+  for (const label of labels) {
+    const text = (label.textContent ?? "").trim();
+    if (text.includes(want)) {
+      (label as HTMLElement).click();
+      LOG("selectStatus: clicked:", want);
+      return;
+    }
+  }
+  LOG("selectStatus: no label matched:", want);
+}
+
+/**
+ * Receives a condition name and clicks the corresponding option inside [data-test-id="select-condition"].
+ * The visible text is inside a span within the label (e.g. "ახალი გარემონტებული", "ძველი გარემონტებული").
+ */
+function selectCondition(conditionName: string): void {
+  const container = document.querySelector('[data-test-id="select-condition"]');
+  if (!container) {
+    LOG(
+      "selectCondition: container [data-test-id='select-condition'] not found",
+    );
+    return;
+  }
+  const want = normalizeStatusText(conditionName);
+  if (!want) return;
+  const labels = container.querySelectorAll("label");
+  for (const label of labels) {
+    const text = (label.textContent ?? "").trim();
+    if (text.includes(want)) {
+      (label as HTMLElement).click();
+      LOG("selectCondition: clicked:", want);
+      return;
+    }
+  }
+  LOG("selectCondition: no label matched:", want);
+}
+
+/**
+ * Detect statement page language from the location field label or language switcher.
+ * Returns "ka" | "en" | "ru" for Georgian, English, or Russian. Defaults to "ka".
+ */
+function detectStatementPageLang(): StatementPageLang {
+  const container = document.querySelector('[data-test-id="input-location"]');
+  if (!container) return "ka";
+  const label = container.querySelector('.label, label, [class*="label"]');
+  const labelText = (label?.textContent ?? "").trim();
+  if (/Location/i.test(labelText)) return "en";
+  if (/Местоположение/i.test(labelText)) return "ru";
+  if (/[\u10A0-\u10FF]/.test(labelText) || labelText.includes("მდებარეობა"))
+    return "ka";
+  const root = document.documentElement;
+  const lang = (root.getAttribute("lang") ?? "").toLowerCase();
+  if (lang.startsWith("en")) return "en";
+  if (lang.startsWith("ru")) return "ru";
+  return "ka";
+}
+
+function isVisible(el: Element): boolean {
+  const style = window.getComputedStyle(el);
+  if (style.display === "none" || style.visibility === "hidden") return false;
+  if (style.opacity === "0") return false;
+  const rect = el.getBoundingClientRect();
+  return rect.width > 0 && rect.height > 0;
+}
+
+/** Location in all languages for matching dropdown options (dropdown can show ka, en, or ru). */
+type LocationTriple = { ka: string; en: string; ru: string };
+
+function getLocationOptionText(li: Element): string {
+  const firstSpan = li.querySelector("span.text-black-100, span:first-child");
+  return (firstSpan?.textContent ?? li.textContent ?? "").trim();
+}
+
+/**
+ * Set location: open dropdown, find the li whose first span matches any of location.ka/en/ru, then click that li.
+ * Dropdown structure: .select-dropdown ul li, first span = location name (e.g. "თბილისი").
+ */
+function setLocation(location: LocationTriple): void {
+  const container = document.querySelector('[data-test-id="input-location"]');
+  if (!container) {
+    LOG("setLocation: container [data-test-id='input-location'] not found");
+    return;
+  }
+
+  const wantSet = new Set(
+    [location.ka.trim(), location.en.trim(), location.ru.trim()].filter(
+      Boolean,
+    ),
+  );
+  if (wantSet.size === 0) return;
+
+  const input = container.querySelector("input");
+  const label = container.querySelector("label");
+  const selectContainer = container.querySelector(".select-container");
+  const trigger = (selectContainer ?? label ?? input) as HTMLElement | null;
+  if (input) input.focus();
+  if (trigger) trigger.click();
+
+  function findAndClickInSelectDropdown(attempt: number): void {
+    const dropdown = document.querySelector(".select-dropdown");
+    if (!dropdown || !isVisible(dropdown)) {
+      if (attempt < 8) {
+        setTimeout(
+          () => findAndClickInSelectDropdown(attempt + 1),
+          100 + attempt * 80,
+        );
+      } else {
+        LOG("setLocation: .select-dropdown not found or not visible");
+      }
+      return;
+    }
+    const items = dropdown.querySelectorAll("ul li");
+    for (const li of items) {
+      const optionText = getLocationOptionText(li);
+      if (!optionText || !wantSet.has(optionText)) continue;
+      if (!(li instanceof HTMLElement)) continue;
+      li.click();
+      LOG("setLocation: clicked", optionText);
+      return;
+    }
+    if (attempt < 8) {
+      setTimeout(
+        () => findAndClickInSelectDropdown(attempt + 1),
+        100 + attempt * 80,
+      );
+    } else {
+      LOG("setLocation: no option matched", [...wantSet]);
+    }
+  }
+
+  setTimeout(() => findAndClickInSelectDropdown(0), 350);
+}
+
+/**
+ * Fill the MyHome statement create form: total_price input, GEL/USD toggle, condition, status, location, then photo upload.
  */
 export function fillMyHomeStatementForm(payload: StatementFormPayload): void {
-  const { price, imageUrls } = payload;
+  const {
+    price,
+    imageUrls,
+    status,
+    condition,
+    location: locationOption,
+  } = payload;
+
+  const lang: StatementPageLang = payload.lang ?? detectStatementPageLang();
+  LOG("statement page lang:", lang);
 
   if (price) {
     setPriceAndCurrency(price);
   } else {
     LOG("no price in payload, skipping price/currency fill");
   }
+
+  if (condition) {
+    LOG("filling condition:", condition);
+    selectCondition(condition);
+  } else {
+    LOG("no condition in payload, skipping condition fill");
+  }
+
+  if (status) {
+    LOG("filling status:", status);
+    selectStatus(status);
+  } else {
+    LOG("no status in payload, skipping status fill");
+  }
+
+  const location = locationOption ?? getLocationFromTitle(payload.title ?? "");
+  setLocation(location);
+  LOG("filling location:", location[lang], "lang:", lang);
 
   LOG(
     "imageUrls from payload:",
