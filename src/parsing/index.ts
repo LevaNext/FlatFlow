@@ -41,8 +41,15 @@ export function parseListing(
       ...(data.imageUrls !== undefined && { imageUrls: data.imageUrls }),
       ...(data.status !== undefined && { status: data.status }),
       ...(data.condition !== undefined && { condition: data.condition }),
+      ...(data.projectType !== undefined && { projectType: data.projectType }),
       ...(data.location !== undefined && { location: data.location }),
+      ...(data.address !== undefined && { address: data.address }),
+      ...(data.subway !== undefined && { subway: data.subway }),
       ...(data.lang !== undefined && { lang: data.lang }),
+      ...(data.area !== undefined && { area: data.area }),
+      ...(data.rooms !== undefined && { rooms: data.rooms }),
+      ...(data.beds !== undefined && { beds: data.beds }),
+      ...(data.floor !== undefined && { floor: data.floor }),
     };
     return { listing, errors };
   } catch {

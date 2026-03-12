@@ -68,6 +68,7 @@ function runFillFromStorage(): void {
               imageUrlsLength: payload?.data?.imageUrls?.length ?? 0,
               status: payload?.data?.status,
               condition: payload?.data?.condition,
+              projectType: payload?.data?.projectType,
               location: payload?.data?.location,
               lang: payload?.data?.lang,
             }

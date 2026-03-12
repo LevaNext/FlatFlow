@@ -135,6 +135,167 @@ function getLocationOptionText(li: Element): string {
 }
 
 /**
+ * Find an input by its label text (e.g. "ფართი", "სართული"). Searches for a label/span containing
+ * the text, then returns the input in the same container.
+ */
+function findInputByLabelText(labelText: string): HTMLInputElement | null {
+  const candidates = document.querySelectorAll(
+    'label span, span[class*="label"], label',
+  );
+  for (const el of candidates) {
+    const text = (el.textContent ?? "").trim();
+    if (!text.includes(labelText)) continue;
+    const container =
+      el.closest(".input-container") ??
+      el.closest("label")?.parentElement ??
+      el.closest("div");
+    const input = container?.querySelector("input");
+    if (input instanceof HTMLInputElement) return input;
+  }
+  return null;
+}
+
+/**
+ * Set area: fill the input with label "ფართი" (area in m²).
+ */
+function setArea(area: number): void {
+  const input = findInputByLabelText("ფართი");
+  if (!input) {
+    LOG("setArea: input with label ფართი not found");
+    return;
+  }
+  input.value = String(area);
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  input.dispatchEvent(new Event("change", { bubbles: true }));
+  LOG("setArea: filled", area);
+}
+
+/**
+ * Click the room-count option that matches the given number (1–9 or 10+).
+ * Looks for a container with many numeric-option labels (rooms selector), then clicks the matching one.
+ */
+function setRooms(rooms: number): void {
+  if (rooms < 1) return;
+  const wantText = rooms >= 10 ? "10+" : String(rooms);
+  const labels = document.querySelectorAll("label");
+  for (const label of labels) {
+    const mainSpan = label.querySelector("span");
+    const mainText = (mainSpan?.textContent ?? label.textContent ?? "").trim();
+    if (mainText !== wantText) continue;
+    const wrapper = label.closest(
+      "div.flex-wrap, div[class*='flex'][class*='gap']",
+    );
+    const siblingLabels = wrapper?.querySelectorAll("label") ?? [];
+    if (siblingLabels.length >= 8) {
+      (label as HTMLElement).click();
+      LOG("setRooms: clicked", wantText);
+      return;
+    }
+  }
+  for (const label of labels) {
+    if ((label.textContent ?? "").trim() === wantText) {
+      (label as HTMLElement).click();
+      LOG("setRooms: clicked (fallback)", wantText);
+      return;
+    }
+  }
+  LOG("setRooms: no option matched", rooms);
+}
+
+/**
+ * Set floor: parse "current/total" (e.g. "7/15") and fill the two inputs
+ * "სართული" (current floor) and "სართულები სულ" (total floors).
+ */
+function setFloor(floor: string): void {
+  const parts = floor
+    .split("/")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (parts.length < 2) {
+    LOG("setFloor: invalid format, expected e.g. 7/15", floor);
+    return;
+  }
+  const [current, total] = parts;
+  const currentInput = findInputByLabelText("სართული");
+  const totalInput = findInputByLabelText("სართულები სულ");
+  if (currentInput) {
+    currentInput.value = current;
+    currentInput.dispatchEvent(new Event("input", { bubbles: true }));
+    currentInput.dispatchEvent(new Event("change", { bubbles: true }));
+    LOG("setFloor: current", current);
+  } else {
+    LOG("setFloor: input სართული not found");
+  }
+  if (totalInput) {
+    totalInput.value = total;
+    totalInput.dispatchEvent(new Event("input", { bubbles: true }));
+    totalInput.dispatchEvent(new Event("change", { bubbles: true }));
+    LOG("setFloor: total", total);
+  } else {
+    LOG("setFloor: input სართულები სულ not found");
+  }
+}
+
+/**
+ * Set bedroom count: the beds selector appears after rooms is selected (same layout: labels 1, 2, 3…).
+ * Find the second numeric-option group (first is rooms with many options, second is beds with fewer).
+ */
+function setBedroom(beds: number): void {
+  if (beds < 1) return;
+  const wantText = String(beds);
+  const wrappers = document.querySelectorAll(
+    'div[class*="luk-flex"][class*="luk-flex-wrap"][class*="luk-gap-3"], div.flex-wrap, div[class*="flex"][class*="gap"]',
+  );
+  let foundRooms = false;
+  for (const wrapper of wrappers) {
+    const labels = wrapper.querySelectorAll("label");
+    const numericLabels = Array.from(labels).filter((l) => {
+      const span = l.querySelector("span");
+      const t = (span?.textContent ?? l.textContent ?? "").trim();
+      return /^(\d+|10\+)$/.test(t);
+    });
+    if (numericLabels.length >= 8) {
+      foundRooms = true;
+      continue;
+    }
+    if (numericLabels.length >= 1 && foundRooms) {
+      for (const label of numericLabels) {
+        const span = label.querySelector("span");
+        const t = (span?.textContent ?? label.textContent ?? "").trim();
+        if (t === wantText) {
+          (label as HTMLElement).click();
+          LOG("setBedroom: clicked", wantText);
+          return;
+        }
+      }
+      LOG("setBedroom: beds option not found in second group", wantText);
+      return;
+    }
+  }
+  LOG("setBedroom: beds container not found (select rooms first?)");
+}
+
+/**
+ * Set street/address: fill the input in [data-test-id="input-street"] (label "ქუჩა").
+ */
+function setStreet(address: string): void {
+  const container = document.querySelector('[data-test-id="input-street"]');
+  if (!container) {
+    LOG("setStreet: container [data-test-id='input-street'] not found");
+    return;
+  }
+  const input = container.querySelector("input");
+  if (!input || !(input instanceof HTMLInputElement)) {
+    LOG("setStreet: input not found");
+    return;
+  }
+  input.value = address.trim();
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  input.dispatchEvent(new Event("change", { bubbles: true }));
+  LOG("setStreet: filled", address.trim());
+}
+
+/**
  * Set location: open dropdown, find the li whose first span matches any of location.ka/en/ru, then click that li.
  * Dropdown structure: .select-dropdown ul li, first span = location name (e.g. "თბილისი").
  */
@@ -194,6 +355,79 @@ function setLocation(location: LocationTriple): void {
   setTimeout(() => findAndClickInSelectDropdown(0), 350);
 }
 
+/** Label for project type select on the statement form (Georgian). */
+const PROJECT_TYPE_SELECT_LABEL = "აირჩიეთ პროექტის ტიპი";
+
+/**
+ * Set project type: find custom select by label "აირჩიეთ პროექტის ტიპი", click to open,
+ * then find the opened options list (ul.options-list inside luk-absolute dropdown) and click the matching li.
+ * Dropdown structure: div.luk-absolute > ul.options-list > li (text directly in li).
+ */
+function setProjectType(projectType: string): void {
+  const want = normalizeStatusText(projectType);
+  if (!want) return;
+
+  const candidates = document.querySelectorAll(
+    ".luk-custom-select, [class*='custom-select'], [class*='luk-custom-select']",
+  );
+  let container: Element | null = null;
+  for (const el of candidates) {
+    const label = el.querySelector(".label, label, span[class*='label']");
+    const text = (label?.textContent ?? "").trim();
+    if (
+      text.includes(PROJECT_TYPE_SELECT_LABEL) ||
+      text.includes("პროექტის ტიპი")
+    ) {
+      container = el;
+      break;
+    }
+  }
+  if (!container) {
+    LOG(
+      "setProjectType: container with label",
+      PROJECT_TYPE_SELECT_LABEL,
+      "not found",
+    );
+    return;
+  }
+
+  const trigger = container.querySelector(
+    "div[class*='cursor-pointer'], .luk-cursor-pointer, div",
+  );
+  const input = container.querySelector("input");
+  if (input) input.focus();
+  if (trigger instanceof HTMLElement) trigger.click();
+
+  function findAndClickOption(attempt: number): void {
+    const lists = document.querySelectorAll("ul.options-list");
+    for (const ul of lists) {
+      if (!isVisible(ul)) continue;
+      const items = ul.querySelectorAll("li");
+      for (const li of items) {
+        const optionText = (li.textContent ?? "").trim();
+        if (
+          (optionText === want || optionText.includes(want)) &&
+          li instanceof HTMLElement
+        ) {
+          li.click();
+          LOG("setProjectType: clicked", optionText);
+          return;
+        }
+      }
+    }
+    if (attempt < 12) {
+      setTimeout(() => findAndClickOption(attempt + 1), 80 + attempt * 50);
+    } else {
+      LOG(
+        "setProjectType: ul.options-list not visible or no option matched",
+        want,
+      );
+    }
+  }
+
+  setTimeout(() => findAndClickOption(0), 350);
+}
+
 /**
  * Fill the MyHome statement create form: total_price input, GEL/USD toggle, condition, status, location, then photo upload.
  */
@@ -203,7 +437,13 @@ export function fillMyHomeStatementForm(payload: StatementFormPayload): void {
     imageUrls,
     status,
     condition,
+    projectType,
     location: locationOption,
+    address,
+    area,
+    rooms,
+    beds,
+    floor,
   } = payload;
 
   const lang: StatementPageLang = payload.lang ?? detectStatementPageLang();
@@ -232,6 +472,30 @@ export function fillMyHomeStatementForm(payload: StatementFormPayload): void {
   const location = locationOption ?? getLocationFromTitle(payload.title ?? "");
   setLocation(location);
   LOG("filling location:", location[lang], "lang:", lang);
+
+  if (projectType?.trim()) {
+    setTimeout(() => setProjectType(projectType.trim()), 400);
+    LOG("filling project type:", projectType);
+  }
+
+  if (address?.trim()) {
+    setStreet(address);
+  } else {
+    LOG("no address in payload, skipping street fill");
+  }
+
+  if (area != null) {
+    setArea(area);
+  }
+  if (rooms != null) {
+    setRooms(rooms);
+  }
+  if (floor?.trim()) {
+    setFloor(floor.trim());
+  }
+  if (beds != null) {
+    setTimeout(() => setBedroom(beds), 400);
+  }
 
   LOG(
     "imageUrls from payload:",

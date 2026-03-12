@@ -17,8 +17,10 @@ export interface ListingData {
   /** All gallery image URLs (full-size). Used for statement form photo upload. */
   imageUrls?: string[];
   source: ListingSource;
-  /** Full address or street (e.g. "ვაჟა-ფშაველას გამზირი"). */
+  /** Full address or street (e.g. "გურამიშვილის გამზ. 62ბ"). */
   address?: string;
+  /** Subway / metro station name if present (e.g. "ღრმაღელე"). */
+  subway?: string;
   /** Number of rooms. */
   rooms?: number;
   /** Number of beds. */
@@ -39,6 +41,8 @@ export interface ListingData {
   status?: string;
   /** Condition from listing (e.g. "ახალი გარემონტებული"). Used to prefill statement form. */
   condition?: string;
+  /** Project type from listing (e.g. "არასტანდარტული"). Used to prefill statement form. */
+  projectType?: string;
   /** Location derived from title (last word), in ka/en/ru. Default Tbilisi if not in list. */
   location?: { ka: string; en: string; ru: string };
   /** Website language when listing was parsed (ka | en | ru). Saved and used for location display. */

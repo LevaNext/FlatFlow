@@ -8,6 +8,7 @@ import { getListingAttributes } from "./selectors/getListingAttributes";
 import { getListingMeta } from "./selectors/getListingMeta";
 import { getPageLang } from "./selectors/getPageLang";
 import { getPrice } from "./selectors/getPrice";
+import { getProjectType } from "./selectors/getProjectType";
 import { getStatus } from "./selectors/getStatus";
 import { getTitle } from "./selectors/getTitle";
 
@@ -69,7 +70,10 @@ function applyPrice(
 
 function applyAddress(data: Partial<ListingData>, doc: Document): void {
   const result = getAddress(doc);
-  if (result.ok) data.address = result.value;
+  if (result.ok) {
+    data.address = result.value.address;
+    if (result.value.subway) data.subway = result.value.subway;
+  }
 }
 
 function applyMeta(data: Partial<ListingData>, doc: Document): void {
@@ -87,6 +91,7 @@ function applyAttrs(data: Partial<ListingData>, doc: Document): void {
   const attrs = result.value;
   if (attrs.area != null) data.area = attrs.area;
   if (attrs.rooms != null) data.rooms = attrs.rooms;
+  if (attrs.beds != null) data.beds = attrs.beds;
   if (attrs.floor != null) data.floor = attrs.floor;
 }
 
@@ -101,6 +106,13 @@ function applyCondition(data: Partial<ListingData>, doc: Document): void {
   const result = getCondition(doc);
   if (result.ok && result.value.trim().length > 0) {
     data.condition = result.value.trim();
+  }
+}
+
+function applyProjectType(data: Partial<ListingData>, doc: Document): void {
+  const result = getProjectType(doc);
+  if (result.ok && result.value.trim().length > 0) {
+    data.projectType = result.value.trim();
   }
 }
 
@@ -124,6 +136,7 @@ export function parseMyHomeListing(doc: Document): ParserOutput<ListingData> {
   applyAttrs(data, doc);
   applyStatus(data, doc);
   applyCondition(data, doc);
+  applyProjectType(data, doc);
   applyLang(data, doc);
 
   return { data, errors };
