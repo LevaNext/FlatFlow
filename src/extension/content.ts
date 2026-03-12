@@ -69,6 +69,8 @@ function runFillFromStorage(): void {
               status: payload?.data?.status,
               condition: payload?.data?.condition,
               projectType: payload?.data?.projectType,
+              propertyType: payload?.data?.propertyType,
+              dealType: payload?.data?.dealType,
               location: payload?.data?.location,
               lang: payload?.data?.lang,
             }

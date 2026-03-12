@@ -1,0 +1,40 @@
+{
+  "propertyTypes": [
+    {
+      "value": "apartment",
+      "ka": "ბინა",
+      "en": "Apartment",
+      "ru": "Квартира"
+    },
+    {
+      "value": "private_house",
+      "ka": "კერძო სახლი",
+      "en": "Private house",
+      "ru": "Частный дом"
+    },
+    {
+      "value": "country_house",
+      "ka": "აგარაკი",
+      "en": "Country house",
+      "ru": "Дача"
+    },
+    {
+      "value": "plot",
+      "ka": "მიწის ნაკვეთი",
+      "en": "Plot",
+      "ru": "Земельный участок"
+    },
+    {
+      "value": "commercial_area",
+      "ka": "კომერციული ფართი",
+      "en": "Commercial area",
+      "ru": "Коммерческая площадь"
+    },
+    {
+      "value": "hotel",
+      "ka": "სასტუმრო",
+      "en": "Hotel",
+      "ru": "Гостиница"
+    }
+  ]
+}

@@ -7,6 +7,8 @@ const TITLE_SELECTORS = [
   "h3.font-tbcx-bold",
   "h1.d-title",
   ".detail-title",
+  "div.flex.flex-row.gap-4.font-tbcx-bold",
+  "div.font-tbcx-bold",
   "h1",
 ];
 

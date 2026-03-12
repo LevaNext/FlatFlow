@@ -14,6 +14,10 @@ export interface StatementFormPayload {
   condition?: string;
   /** Project type from listing (e.g. "არასტანდარტული"). Filled into project type select (label "აირჩიეთ პროექტის ტიპი") like location. */
   projectType?: string;
+  /** Real estate type label from title (exact text from propertyTypes: ka/en/ru, e.g. "კერძო სახლი"). Used to click the matching chip. */
+  propertyType?: string;
+  /** Deal type label from title (exact text from dealTypes: ka/en/ru, e.g. "იყიდება", "ქირავდება"). Used to click [data-test-id="select-deal-type"]. */
+  dealType?: string;
   /** Location in ka/en/ru (from title last word, default Tbilisi). Filled into [data-test-id="input-location"] using lang. */
   location?: { ka: string; en: string; ru: string };
   /** Full address or street (e.g. "გურამიშვილის გამზ. 62ბ"). Filled into [data-test-id="input-street"]. */

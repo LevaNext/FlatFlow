@@ -43,6 +43,10 @@ export interface ListingData {
   condition?: string;
   /** Project type from listing (e.g. "არასტანდარტული"). Used to prefill statement form. */
   projectType?: string;
+  /** Real estate type label from title (exact text from propertyTypes: ka/en/ru, e.g. "კერძო სახლი"). */
+  propertyType?: string;
+  /** Deal type label from title (exact text from dealTypes: ka/en/ru, e.g. "იყიდება", "ქირავდება"). */
+  dealType?: string;
   /** Location derived from title (last word), in ka/en/ru. Default Tbilisi if not in list. */
   location?: { ka: string; en: string; ru: string };
   /** Website language when listing was parsed (ka | en | ru). Saved and used for location display. */

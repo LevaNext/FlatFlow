@@ -1,4 +1,6 @@
+import { matchDealTypeLabelFromTitle } from "@/data/dealTypes";
 import { getLocationFromTitle } from "@/data/locations";
+import { matchPropertyTypeLabelFromTitle } from "@/data/propertyTypes";
 import type { ListingData } from "@/types/listing";
 import type { ParserError, ParserOutput } from "@/types/parser";
 import { getAddress } from "./selectors/getAddress";
@@ -30,6 +32,8 @@ function applyTitle(
   if (result.ok) {
     data.title = result.value;
     data.location = getLocationFromTitle(result.value);
+    applyPropertyType(data);
+    applyDealType(data);
   } else errors.push(toParserError(result));
 }
 
@@ -113,6 +117,40 @@ function applyProjectType(data: Partial<ListingData>, doc: Document): void {
   const result = getProjectType(doc);
   if (result.ok && result.value.trim().length > 0) {
     data.projectType = result.value.trim();
+  }
+}
+
+/** Set propertyType from title: store the exact label from JSON (ka/en/ru). See docs/PROPERTY_TYPE_FROM_TITLE.md. */
+function applyPropertyType(data: Partial<ListingData>): void {
+  if (!data.title) return;
+  const label = matchPropertyTypeLabelFromTitle(data.title);
+  if (label) {
+    data.propertyType = label;
+    if (typeof console !== "undefined") {
+      console.log(
+        "[FlatFlow] propertyType from title:",
+        JSON.stringify(label),
+        "| title:",
+        data.title.slice(0, 60) + (data.title.length > 60 ? "…" : ""),
+      );
+    }
+  }
+}
+
+/** Set dealType from title: store the exact label from JSON (ka/en/ru), e.g. "იყიდება", "ქირავდება". */
+function applyDealType(data: Partial<ListingData>): void {
+  if (!data.title) return;
+  const label = matchDealTypeLabelFromTitle(data.title);
+  if (label) {
+    data.dealType = label;
+    if (typeof console !== "undefined") {
+      console.log(
+        "[FlatFlow] dealType from title:",
+        JSON.stringify(label),
+        "| title:",
+        data.title.slice(0, 60) + (data.title.length > 60 ? "…" : ""),
+      );
+    }
   }
 }
 

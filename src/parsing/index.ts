@@ -4,7 +4,7 @@
  */
 
 import type { ListingData, ListingSource } from "@/types/listing";
-import type { ParserError } from "@/types/parser";
+import type { ParserError, ParserOutput } from "@/types/parser";
 import { parseMyHomeListing } from "./myhome/myhome.parser";
 import { parseSsListing } from "./ss/ss.parser";
 
@@ -13,6 +13,35 @@ export type SiteId = import("./detectors/siteDetector").SiteId;
 export interface ParseListingResult {
   listing: ListingData | null;
   errors: ParserError[];
+}
+
+const MYHOME_SOURCE: ListingData["source"] = "myhome";
+
+function buildListingFromMyHomeData(
+  data: ParserOutput<ListingData>["data"],
+): ListingData {
+  const optional = (key: keyof ListingData, value: unknown) =>
+    value === undefined ? {} : { [key]: value };
+  return {
+    source: MYHOME_SOURCE,
+    ...optional("title", data.title),
+    ...optional("price", data.price),
+    ...optional("imageUrl", data.imageUrl),
+    ...optional("imageUrls", data.imageUrls),
+    ...optional("status", data.status),
+    ...optional("condition", data.condition),
+    ...optional("projectType", data.projectType),
+    ...optional("propertyType", data.propertyType),
+    ...optional("dealType", data.dealType),
+    ...optional("location", data.location),
+    ...optional("address", data.address),
+    ...optional("subway", data.subway),
+    ...optional("lang", data.lang),
+    ...optional("area", data.area),
+    ...optional("rooms", data.rooms),
+    ...optional("beds", data.beds),
+    ...optional("floor", data.floor),
+  };
 }
 
 /**
@@ -33,25 +62,7 @@ export function parseListing(
 
   try {
     const { data, errors } = parseMyHomeListing(doc);
-    const listing: ListingData = {
-      source: "myhome",
-      ...(data.title !== undefined && { title: data.title }),
-      ...(data.price !== undefined && { price: data.price }),
-      ...(data.imageUrl !== undefined && { imageUrl: data.imageUrl }),
-      ...(data.imageUrls !== undefined && { imageUrls: data.imageUrls }),
-      ...(data.status !== undefined && { status: data.status }),
-      ...(data.condition !== undefined && { condition: data.condition }),
-      ...(data.projectType !== undefined && { projectType: data.projectType }),
-      ...(data.location !== undefined && { location: data.location }),
-      ...(data.address !== undefined && { address: data.address }),
-      ...(data.subway !== undefined && { subway: data.subway }),
-      ...(data.lang !== undefined && { lang: data.lang }),
-      ...(data.area !== undefined && { area: data.area }),
-      ...(data.rooms !== undefined && { rooms: data.rooms }),
-      ...(data.beds !== undefined && { beds: data.beds }),
-      ...(data.floor !== undefined && { floor: data.floor }),
-    };
-    return { listing, errors };
+    return { listing: buildListingFromMyHomeData(data), errors };
   } catch {
     return {
       listing: null,

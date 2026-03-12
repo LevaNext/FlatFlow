@@ -3,6 +3,7 @@
  */
 
 import { getLocationFromTitle } from "@/data/locations";
+import { PROPERTY_TYPES } from "@/data/propertyTypes";
 import { MESSAGE_FETCH_IMAGES } from "@/extension/messages";
 import { dataUrlToFile } from "./shared";
 import type { StatementFormPayload } from "./types";
@@ -96,6 +97,130 @@ function selectCondition(conditionName: string): void {
     }
   }
   LOG("selectCondition: no label matched:", want);
+}
+
+/**
+ * Receives property type label (exact text from JSON, e.g. "კერძო სახლი") and clicks the matching chip.
+ * Finds the chip container and clicks the label whose text matches the stored label.
+ */
+function selectPropertyType(propertyTypeLabel: string): void {
+  const want = normalizeStatusText(propertyTypeLabel);
+  if (!want) return;
+
+  const container =
+    document.querySelector('[data-test-id="select-property-type"]') ??
+    findPropertyTypeChipContainer();
+  if (!container) {
+    LOG("selectPropertyType: container not found");
+    return;
+  }
+  const wantLower = want.toLowerCase();
+  const labels = container.querySelectorAll("label");
+  const chipTexts: string[] = [];
+  for (const label of labels) {
+    const text = (label.textContent ?? "").trim();
+    if (!text) continue;
+    chipTexts.push(text);
+    const textLower = text.toLowerCase();
+    const match =
+      text === want ||
+      textLower === wantLower ||
+      text.includes(want) ||
+      textLower.includes(wantLower) ||
+      wantLower.includes(textLower);
+    if (match) {
+      (label as HTMLElement).click();
+      LOG("selectPropertyType: clicked chip", JSON.stringify(text));
+      return;
+    }
+  }
+  LOG(
+    "selectPropertyType: no chip matched for",
+    JSON.stringify(want),
+    "| chips:",
+    chipTexts.map((t) => JSON.stringify(t)),
+  );
+}
+
+function fillPropertyType(propertyType: string): void {
+  const value = propertyType.trim();
+  if (!value) return;
+  LOG("filling property type (override default if needed):", value);
+  selectPropertyType(value);
+}
+
+/**
+ * Receives deal type label (exact text from JSON, e.g. "იყიდება", "ქირავდება") and clicks the matching chip
+ * inside [data-test-id="select-deal-type"].
+ */
+function selectDealType(dealTypeLabel: string): void {
+  const want = normalizeStatusText(dealTypeLabel);
+  if (!want) return;
+
+  const container = document.querySelector('[data-test-id="select-deal-type"]');
+  if (!container) {
+    LOG(
+      "selectDealType: container [data-test-id='select-deal-type'] not found",
+    );
+    return;
+  }
+  const wantLower = want.toLowerCase();
+  const labels = container.querySelectorAll("label");
+  const chipTexts: string[] = [];
+  for (const label of labels) {
+    const text = (label.textContent ?? "").trim();
+    if (!text) continue;
+    chipTexts.push(text);
+    const textLower = text.toLowerCase();
+    const match =
+      text === want ||
+      textLower === wantLower ||
+      text.includes(want) ||
+      textLower.includes(wantLower) ||
+      wantLower.includes(textLower);
+    if (match) {
+      (label as HTMLElement).click();
+      LOG("selectDealType: clicked chip", JSON.stringify(text));
+      return;
+    }
+  }
+  LOG(
+    "selectDealType: no chip matched for",
+    JSON.stringify(want),
+    "| chips:",
+    chipTexts.map((t) => JSON.stringify(t)),
+  );
+}
+
+function fillDealType(dealType: string): void {
+  const value = dealType.trim();
+  if (!value) return;
+  LOG("filling deal type:", value);
+  selectDealType(value);
+}
+
+/** All property type labels (ka, en, ru) for finding the chip container in any language. */
+const PROPERTY_TYPE_LABEL_TEXTS = new Set(
+  PROPERTY_TYPES.flatMap((p) =>
+    [p.ka, p.en, p.ru].map((s) => s?.trim()).filter(Boolean),
+  ),
+);
+
+/** Find div that contains labels with property type texts (any language). */
+function findPropertyTypeChipContainer(): Element | null {
+  const divs = document.querySelectorAll(
+    "div[class*='luk-flex'][class*='luk-w-full'], div[class*='flex'][class*='gap']",
+  );
+  for (const div of divs) {
+    const labels = div.querySelectorAll("label");
+    if (labels.length < 4) continue;
+    for (const label of labels) {
+      const span = label.querySelector("span.luk-text-sm, span");
+      const text = (span?.textContent ?? label.textContent ?? "").trim();
+      if (text && PROPERTY_TYPE_LABEL_TEXTS.has(text)) return div;
+    }
+  }
+  return null;
 }
 
 /**
@@ -203,29 +328,29 @@ function setRooms(rooms: number): void {
 }
 
 /**
- * Set floor: parse "current/total" (e.g. "7/15") and fill the two inputs
- * "სართული" (current floor) and "სართულები სულ" (total floors).
+ * Set floor: if value has "current/total" (e.g. "7/15"), fill both inputs;
+ * if only a single number (e.g. "3") with no "/", fill only "სართულები სულ" (total floors).
  */
 function setFloor(floor: string): void {
   const parts = floor
     .split("/")
     .map((s) => s.trim())
     .filter(Boolean);
-  if (parts.length < 2) {
-    LOG("setFloor: invalid format, expected e.g. 7/15", floor);
-    return;
+  const current = parts.length >= 2 ? parts[0] : undefined;
+  const total = parts.length >= 1 ? parts.at(-1) : undefined;
+  if (!total) return;
+  if (current !== undefined) {
+    const currentInput = findInputByLabelText("სართული");
+    if (currentInput) {
+      currentInput.value = current;
+      currentInput.dispatchEvent(new Event("input", { bubbles: true }));
+      currentInput.dispatchEvent(new Event("change", { bubbles: true }));
+      LOG("setFloor: current", current);
+    } else {
+      LOG("setFloor: input სართული not found");
+    }
   }
-  const [current, total] = parts;
-  const currentInput = findInputByLabelText("სართული");
   const totalInput = findInputByLabelText("სართულები სულ");
-  if (currentInput) {
-    currentInput.value = current;
-    currentInput.dispatchEvent(new Event("input", { bubbles: true }));
-    currentInput.dispatchEvent(new Event("change", { bubbles: true }));
-    LOG("setFloor: current", current);
-  } else {
-    LOG("setFloor: input სართული not found");
-  }
   if (totalInput) {
     totalInput.value = total;
     totalInput.dispatchEvent(new Event("input", { bubbles: true }));
@@ -438,6 +563,8 @@ export function fillMyHomeStatementForm(payload: StatementFormPayload): void {
     status,
     condition,
     projectType,
+    propertyType,
+    dealType,
     location: locationOption,
     address,
     area,
@@ -468,6 +595,9 @@ export function fillMyHomeStatementForm(payload: StatementFormPayload): void {
   } else {
     LOG("no status in payload, skipping status fill");
   }
+
+  fillPropertyType(propertyType ?? "");
+  fillDealType(dealType ?? "");
 
   const location = locationOption ?? getLocationFromTitle(payload.title ?? "");
   setLocation(location);

@@ -114,6 +114,17 @@ function SidePanel(): React.ReactElement {
       if (response?.listing) {
         setListing(response.listing);
         setError(null);
+        if (
+          response.listing.propertyType != null ||
+          response.listing.dealType != null
+        ) {
+          console.debug(
+            "[FlatFlow] saving listing with propertyType:",
+            response.listing.propertyType,
+            "dealType:",
+            response.listing.dealType,
+          );
+        }
         saveParsedListing({
           data: response.listing,
           errors: errs,
