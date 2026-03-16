@@ -6,11 +6,12 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
+import { MYHOME_GE } from "@/shared/constants";
 
 /** Main listing site: show normal app UI (parse listing, upload, etc.) */
-const SUPPORTED_DOMAIN = "myhome.ge";
+const SUPPORTED_DOMAIN = MYHOME_GE.domain;
 /** Statement create page: show success/encouragement state only */
-const STATEMENT_DOMAIN = "statements.myhome.ge";
+const STATEMENT_DOMAIN = MYHOME_GE.statementHost;
 
 function getDomainFromUrl(url: string | undefined): string | null {
   if (url == null || typeof url !== "string" || url.trim() === "") return null;

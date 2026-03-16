@@ -1,15 +1,16 @@
 /**
- * Service worker: side panel (myhome.ge only), image fetch.
- * On myhome.ge → open panel. Otherwise (any other site, new tab, about:blank, invalid) → redirect to myhome.ge.
+ * Service worker: side panel on supported sites, image fetch.
+ * On supported domain (myhome.ge, ss.ge) → open side panel.
+ * Otherwise → navigate to FlatFlow landing page.
  */
 
+import { LANDING_PAGE_URL, SUPPORTED_DOMAINS } from "@/shared/constants";
 import {
   MESSAGE_CLOSE_SIDE_PANEL,
   MESSAGE_FETCH_IMAGES,
   MESSAGE_PANEL_CLOSED,
 } from "./messages";
 
-const MYHOME_URL = "https://www.myhome.ge";
 const STORAGE_KEY_SIDE_PANEL_OPEN = "sidePanelOpen";
 
 console.log("[FlatFlow] background loaded");
@@ -57,7 +58,10 @@ chrome.action.onClicked.addListener((tab) => {
   }
   console.log("[FlatFlow] parsed hostname:", hostname ?? "(none)");
 
-  if (hostname === "myhome.ge") {
+  const isSupported =
+    hostname != null &&
+    SUPPORTED_DOMAINS.includes(hostname as (typeof SUPPORTED_DOMAINS)[number]);
+  if (isSupported) {
     const tabId = tab.id;
     chrome.storage.session.get(STORAGE_KEY_SIDE_PANEL_OPEN, (result) => {
       const isPanelOpen = result?.[STORAGE_KEY_SIDE_PANEL_OPEN] === true;
@@ -80,8 +84,8 @@ chrome.action.onClicked.addListener((tab) => {
     return;
   }
 
-  console.log("[FlatFlow] redirect triggered");
-  chrome.tabs.update(tab.id, { url: MYHOME_URL });
+  console.log("[FlatFlow] redirect to landing page");
+  chrome.tabs.update(tab.id, { url: LANDING_PAGE_URL });
 });
 
 function blobToDataUrl(blob: Blob): Promise<string> {

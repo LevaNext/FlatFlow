@@ -13,7 +13,10 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
-      input: path.resolve(__dirname, "index.html"),
+      input: [
+        path.resolve(__dirname, "index.html"),
+        path.resolve(__dirname, "sidepanel.html"),
+      ],
       output: {
         entryFileNames: "assets/[name]-[hash].js",
         chunkFileNames: "assets/[name]-[hash].js",

@@ -2,10 +2,9 @@
  * Website detection from URL. Parsing-only: no upload or navigation logic.
  */
 
-export type SiteId = "myhome" | "ss" | "unsupported";
+import { MYHOME_GE, SS_GE } from "@/shared/constants";
 
-const MYHOME_HOSTS = ["www.myhome.ge", "myhome.ge"] as const;
-const SS_HOSTS = ["www.ss.ge", "ss.ge"] as const;
+export type SiteId = "myhome" | "ss" | "unsupported";
 
 function getHostname(url: string): string | null {
   try {
@@ -16,11 +15,11 @@ function getHostname(url: string): string | null {
 }
 
 function isMyHome(host: string): boolean {
-  return MYHOME_HOSTS.includes(host as (typeof MYHOME_HOSTS)[number]);
+  return MYHOME_GE.hosts.includes(host as (typeof MYHOME_GE.hosts)[number]);
 }
 
 function isSs(host: string): boolean {
-  return SS_HOSTS.includes(host as (typeof SS_HOSTS)[number]);
+  return SS_GE.hosts.includes(host as (typeof SS_GE.hosts)[number]);
 }
 
 /**

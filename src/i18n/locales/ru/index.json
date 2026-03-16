@@ -44,8 +44,12 @@
   },
   "unsupported": {
     "title": "Неподдерживаемый сайт",
-    "description": "Не удалось определить сайт. Это расширение поддерживает только myhome.ge.",
-    "goToMyHome": "Перейти на MyHome",
+    "navigateTitle": "Перейти на поддерживаемые сайты",
+    "description": "Расширение работает на myhome.ge и ss.ge. Откройте сайт FlatFlow, чтобы узнать больше.",
+    "goToMyHome": "MyHome",
+    "goToSs": "SS.ge",
+    "soon": "Скоро",
+    "goToFlatFlow": "Открыть FlatFlow",
     "message": "Этот сайт пока не поддерживается"
   },
   "selectListing": {

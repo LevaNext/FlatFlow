@@ -7,9 +7,8 @@ import type { Language } from "@/i18n";
 import { LayoutFooter } from "./LayoutFooter";
 import { LayoutHeader, type Theme } from "./LayoutHeader";
 
-export type { Theme };
-
-export type { Language };
+export type { Language } from "@/i18n";
+export type { Theme } from "./LayoutHeader";
 
 type LayoutProps = Readonly<{
   children: React.ReactNode;
@@ -27,7 +26,7 @@ export function Layout({
   onLanguageChange,
 }: LayoutProps): React.ReactElement {
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden border-0 bg-background font-sans text-foreground side-panel-root-shadow">
+    <div className="flex h-full w-full min-h-[100dvh] flex-col overflow-hidden border-0 bg-background font-sans text-foreground side-panel-root-shadow">
       <LayoutHeader theme={theme} onThemeChange={onThemeChange} />
       <main className="flex min-h-0 flex-1 flex-col overflow-hidden">
         {children}

@@ -11,6 +11,7 @@ import { LISTING_READY_SELECTORS } from "@/extension/listingReadySelectors";
 import { MESSAGE_PARSE_LISTING } from "@/extension/messages";
 import { waitForPageReady } from "@/extension/waitForPageReady";
 import { detectSite, parseListing, type SiteId } from "@/parsing";
+import { MYHOME_GE, SS_GE } from "@/shared/constants";
 import { PARSED_LISTING_STORAGE_KEY } from "@/storage/parsedListingStorage";
 
 const LOG = (msg: string, ...args: unknown[]) =>
@@ -20,7 +21,7 @@ function isStatementCreatePage(): boolean {
   try {
     const u = new URL(window.location.href);
     return (
-      u.hostname === "statements.myhome.ge" &&
+      u.hostname === MYHOME_GE.statementHost &&
       u.pathname.includes("/statement/create")
     );
   } catch {
@@ -34,8 +35,8 @@ function isStatementCreatePage(): boolean {
 function getStatementPageSite(): "myhome" | "ss" | null {
   try {
     const host = new URL(window.location.href).hostname.toLowerCase();
-    if (host === "statements.myhome.ge") return "myhome";
-    if (host === "statements.ss.ge") return "ss";
+    if (host === MYHOME_GE.statementHost) return "myhome";
+    if (host === SS_GE.statementHost) return "ss";
     return null;
   } catch {
     return null;

@@ -19,7 +19,7 @@
     }
   },
   "side_panel": {
-    "default_path": "index.html"
+    "default_path": "sidepanel.html"
   },
   "permissions": ["tabs", "activeTab", "scripting", "storage", "sidePanel"],
   "host_permissions": [

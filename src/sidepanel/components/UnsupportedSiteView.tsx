@@ -1,38 +1,35 @@
 /**
- * Full-page "Unsupported Site" empty state when the active tab is not myhome.ge.
- * Renders only this UI (no tabs, no app layout). "Go to MyHome" redirects the current tab.
+ * When the active tab is not a supported site: show "Navigate to supported websites"
+ * with two buttons — MyHome and SS.ge — that redirect the current tab.
  */
 
 import { useCallback } from "react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/i18n";
+import { MYHOME_GE, SS_GE } from "@/shared/constants";
 import { getLogoUrl } from "@/utils/logo";
 import {
   Empty,
   EmptyContent,
-  EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
 } from "./Empty";
 
-const MYHOME_URL = "https://www.myhome.ge";
-
 export function UnsupportedSiteView(): React.ReactElement {
   const { t } = useTranslation();
-  const goToMyHome = useCallback(() => {
+  const goTo = useCallback((url: string) => {
     if (typeof chrome === "undefined" || !chrome.tabs) return;
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       const tab = tabs[0];
-      if (tab?.id) {
-        chrome.tabs.update(tab.id, { url: MYHOME_URL });
-      }
+      if (tab?.id) chrome.tabs.update(tab.id, { url });
     });
   }, []);
 
   return (
     <div className="flex h-full w-full flex-col overflow-hidden border-0 bg-background font-sans text-foreground side-panel-root-shadow">
-      <Empty>
+      <Empty className="flex justify-evenly h-[100dvh]">
         <EmptyHeader>
           <EmptyMedia>
             <img
@@ -43,11 +40,32 @@ export function UnsupportedSiteView(): React.ReactElement {
               height={64}
             />
           </EmptyMedia>
-          <EmptyTitle>{t("unsupported.title")}</EmptyTitle>
-          <EmptyDescription>{t("unsupported.description")}</EmptyDescription>
+          <EmptyTitle className="mt-8">
+            {t("unsupported.navigateTitle")}
+          </EmptyTitle>
         </EmptyHeader>
-        <EmptyContent>
-          <Button onClick={goToMyHome}>{t("unsupported.goToMyHome")}</Button>
+        <EmptyContent className="flex w-full max-w-sm flex-col gap-3">
+          <Button
+            onClick={() => goTo(MYHOME_GE.baseUrl)}
+            variant="glass"
+            className="h-12 w-full"
+          >
+            {t("unsupported.goToMyHome")}
+          </Button>
+          <Button
+            onClick={() => goTo(SS_GE.baseUrl)}
+            variant="glass"
+            className="h-12 w-full gap-2"
+            disabled
+          >
+            <span>{t("unsupported.goToSs")}</span>
+            <Badge
+              variant="outline"
+              className="border-primary shrink-0 text-primary"
+            >
+              {t("unsupported.soon")}
+            </Badge>
+          </Button>
         </EmptyContent>
       </Empty>
     </div>

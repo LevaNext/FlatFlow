@@ -44,8 +44,12 @@
   },
   "unsupported": {
     "title": "Unsupported Website",
-    "description": "Site detection could not be completed. This extension only supports myhome.ge.",
-    "goToMyHome": "Go to MyHome",
+    "navigateTitle": "Navigate to supported websites",
+    "description": "This extension works on myhome.ge and ss.ge. Visit the FlatFlow website to learn more.",
+    "goToMyHome": "MyHome",
+    "goToSs": "SS.ge",
+    "soon": "Soon",
+    "goToFlatFlow": "Open FlatFlow",
     "message": "This website is not supported yet"
   },
   "selectListing": {

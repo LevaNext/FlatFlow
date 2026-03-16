@@ -14,6 +14,7 @@ import {
 import type { ListingData } from "@/types/listing";
 import type { ParserError } from "@/types/parser";
 import "../index.css";
+import { MYHOME_GE } from "@/shared/constants";
 import { type Language, Layout, type Theme } from "./components/Layout";
 import { ListingPreview } from "./components/ListingPreview";
 import { LoadingLogo } from "./components/LoadingLogo";
@@ -23,9 +24,6 @@ import { StatementSuccessView } from "./components/StatementSuccessView";
 import { UnsupportedMessage } from "./components/UnsupportedMessage";
 import { UnsupportedSiteView } from "./components/UnsupportedSiteView";
 import { UploadButtons } from "./components/UploadButtons";
-
-const MYHOME_STATEMENT_URL =
-  "https://statements.myhome.ge/ka/statement/create?referrer=myhome";
 
 const STORAGE_KEY_SIDE_PANEL_OPEN = "sidePanelOpen";
 
@@ -266,7 +264,7 @@ function SidePanel(): React.ReactElement {
     setParsingErrors([]);
     setSiteId(null);
     setError(null);
-    chrome.tabs.create({ url: MYHOME_STATEMENT_URL });
+    chrome.tabs.create({ url: MYHOME_GE.statementUrl });
   }, []);
 
   const renderCurrentPageContent = (): React.ReactElement => {

@@ -44,8 +44,12 @@
   },
   "unsupported": {
     "title": "მხარდაუჭერელი საიტი",
-    "description": "საიტის განსაზღვრა ვერ მოხერხდა. ეს გაფართოება მხარს უჭერს მხოლოდ myhome.ge-ს.",
-    "goToMyHome": "გადადი MyHome-ზე",
+    "navigateTitle": "გადადით მხარდაჭერილ საიტებზე",
+    "description": "ეს გაფართოება მუშაობს myhome.ge და ss.ge-ზე. გაეცანით FlatFlow-ს ვებსაიტზე.",
+    "goToMyHome": "MyHome",
+    "goToSs": "SS.ge",
+    "soon": "მალე",
+    "goToFlatFlow": "გახსენი FlatFlow",
     "message": "ეს საიტი ჯერ არ არის მხარდაჭერილი"
   },
   "selectListing": {
