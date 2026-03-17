@@ -33,4 +33,4 @@ export const SS_GE = {
 export const SUPPORTED_DOMAINS = [MYHOME_GE.domain, SS_GE.domain] as const;
 
 /** Landing page URL when user clicks extension on a non-supported site. */
-export const LANDING_PAGE_URL = "http://localhost:5173";
+export const LANDING_PAGE_URL = "https://flatflowextension.netlify.app/";

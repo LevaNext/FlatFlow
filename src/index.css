@@ -58,8 +58,15 @@
   * {
     @apply border-border;
   }
+  html {
+    scroll-behavior: smooth;
+  }
   body {
     @apply bg-background text-foreground antialiased font-sans;
+  }
+  /* Landing page: Inter-like typography */
+  .landing-page {
+    font-family: "Inter", "Geist Sans", system-ui, sans-serif;
   }
 
   /*

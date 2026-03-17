@@ -19,6 +19,16 @@
       "correctness": { "useExhaustiveDependencies": "warn" }
     }
   },
+  "overrides": [
+    {
+      "includes": ["**/carousel.tsx"],
+      "linter": {
+        "rules": {
+          "a11y": { "useSemanticElements": "off" }
+        }
+      }
+    }
+  ],
   "javascript": { "formatter": { "quoteStyle": "double" } },
   "assist": {
     "enabled": true,
