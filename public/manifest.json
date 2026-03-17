@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "FlatFlow",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Automatically repost listings",
   "icons": {
     "16": "icons/icon16.png",
@@ -10,7 +10,6 @@
     "128": "icons/icon128.png"
   },
   "action": {
-    "default_popup": "popup.html",
     "default_title": "FlatFlow",
     "default_icon": {
       "16": "icons/icon16.png",
@@ -19,13 +18,43 @@
       "128": "icons/icon128.png"
     }
   },
-  "permissions": ["tabs", "activeTab", "scripting"],
-  "optional_host_permissions": ["https://www.myhome.ge/*"],
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "permissions": ["tabs", "activeTab", "scripting", "storage", "sidePanel"],
+  "host_permissions": [
+    "*://myhome.ge/*",
+    "*://www.myhome.ge/*",
+    "https://api-statements.tnet.ge/*"
+  ],
+  "background": { "service_worker": "background.js", "type": "module" },
+  "optional_host_permissions": [
+    "https://www.ss.ge/*",
+    "https://ss.ge/*",
+    "https://statements.myhome.ge/*"
+  ],
   "content_scripts": [
     {
-      "matches": ["https://www.myhome.ge/*"],
+      "matches": [
+        "https://www.myhome.ge/*",
+        "https://www.ss.ge/*",
+        "https://ss.ge/*",
+        "https://statements.myhome.ge/*"
+      ],
       "js": ["content.js"],
       "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "logo.png",
+        "icons/icon16.png",
+        "icons/icon32.png",
+        "icons/icon48.png",
+        "icons/icon128.png"
+      ],
+      "matches": ["<all_urls>"]
     }
   ]
 }

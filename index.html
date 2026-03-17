@@ -1,14 +1,27 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FlatFlow</title>
+    <meta name="description" content="Use the FlatFlow Chrome Extension to automatically repost listings from supported sites." />
+    <!-- Favicon / tab icon -->
+    <link rel="icon" href="/logo.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/logo.png" />
+    <!-- Social / Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="FlatFlow" />
+    <meta property="og:description" content="Use the FlatFlow Chrome Extension to automatically repost listings from supported sites." />
+    <meta property="og:image" content="/logo.png" />
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="FlatFlow" />
+    <meta name="twitter:description" content="Use the FlatFlow Chrome Extension to automatically repost listings from supported sites." />
+    <meta name="twitter:image" content="/logo.png" />
     <link rel="stylesheet" href="https://fonts.geist.dev/css/geist-sans.css" />
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" src="/src/website/main.tsx"></script>
   </body>
 </html>

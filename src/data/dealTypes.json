@@ -1,0 +1,28 @@
+{
+  "dealTypes": [
+    {
+      "ka": "იყიდება",
+      "en": "For Sale",
+      "ru": "Продается",
+      "value": "sale"
+    },
+    {
+      "ka": "ქირავდება",
+      "en": "For Rent",
+      "ru": "Сдается",
+      "value": "rent"
+    },
+    {
+      "ka": "გირავდება",
+      "en": "Lease",
+      "ru": "Сдается под залог",
+      "value": "lease"
+    },
+    {
+      "ka": "ქირავდება დღიურად",
+      "en": "Daily Rent",
+      "ru": "Сдается на день",
+      "value": "daily_rent"
+    }
+  ]
+}

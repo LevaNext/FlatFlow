@@ -22,22 +22,24 @@ pnpm dev       # start dev server
 FlatFlow/
 ├── src/
 │   ├── extension/           # Chrome extension (Manifest v3)
-│   │   ├── components/      # Extension-only UI (e.g. ListingCard)
-│   │   ├── popup.tsx        # Popup UI
-│   │   ├── content.ts       # Content script (myhome.ge)
-│   │   ├── detection.ts     # Listing URL/source detection
+│   │   ├── fill/            # Statement form fill by site (myhome, ss)
+│   │   ├── content.ts       # Content script (parse + fill orchestration)
+│   │   ├── background.ts    # Service worker (e.g. image fetch)
+│   │   ├── messages.ts      # Message types
 │   │   └── README.md
+│   ├── parsing/             # DOM parsers by site (myhome, ss)
+│   ├── sidepanel/           # Chrome side panel UI (SidePanel.tsx + components)
+│   ├── storage/             # Parsed listing storage
 │   ├── components/ui/       # Shared Shadcn UI primitives
 │   ├── lib/                 # Utils (e.g. cn for Shadcn)
 │   ├── index.css            # Global + Tailwind
-│   ├── App.tsx              # Web app (dev/placeholder)
+│   ├── App.tsx              # App shell
 │   └── main.tsx
 ├── public/
 │   ├── manifest.json        # Extension manifest
 │   ├── logo.png
 │   └── icons/               # 16, 32, 48, 128px
-├── index.html               # Web app entry
-├── popup.html               # Extension popup entry
+├── index.html               # Side panel + web app entry
 ├── package.json
 ├── vite.config.ts
 └── tailwind.config.cjs
@@ -79,10 +81,11 @@ Components are added under `src/components/ui/`. Path alias `@/` points to `src/
 
 ## Extension (Chrome Manifest v3)
 
-The extension popup (heading “FlatFlow” + “Upload Listing” button) and optional content script for myhome.ge are built with the app.
+The extension uses a **Chrome side panel** (React UI from `src/sidepanel/SidePanel.tsx`) and a **content script** for listing parsing and statement form fill.
 
-- **Popup:** `src/extension/popup.tsx` + root `popup.html` → `dist/popup.html`
-- **Content script:** `src/extension/content.ts` → `dist/content.js` (runs on `https://www.myhome.ge/*`)
+- **Side panel:** `index.html` → Vite app → `src/main.tsx` mounts `src/sidepanel/SidePanel.tsx` (runs when the panel is opened).
+- **Content script:** `src/extension/content.ts` → `dist/content.js` (runs on myhome.ge, ss.ge, statements.myhome.ge; parses listing DOM and fills statement form from storage).
+- **Background:** `src/extension/background.ts` → `dist/background.js` (service worker; e.g. fetches images for photo upload).
 - **Manifest:** `public/manifest.json` (copied to `dist/`)
 
 **Load in Chrome:** `pnpm build` → open `chrome://extensions` → Developer mode → Load unpacked → select the **`dist`** folder.

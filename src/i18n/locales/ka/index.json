@@ -1,0 +1,72 @@
+{
+  "app": {
+    "title": "FlatFlow",
+    "settings": "პარამეტრები",
+    "settingsAria": "პარამეტრები"
+  },
+  "theme": {
+    "label": "თემა",
+    "dark": "მუქი",
+    "light": "ნათელი"
+  },
+  "lang": {
+    "ka": "ქართული",
+    "en": "English",
+    "ru": "Русский",
+    "shortKa": "ქართ",
+    "shortEn": "EN",
+    "shortRu": "RU"
+  },
+  "upload": {
+    "myHome": "ატვირთე MyHome-ზე"
+  },
+  "status": {
+    "parsing": "ჩამოწერა…",
+    "checking": "შემოწმება…",
+    "ssComingSoon": "SS.ge მალე"
+  },
+  "errors": {
+    "failedParse": "ჩამოწერა ვერ მოხერხდა",
+    "refreshPage": "გვერდის წაკითხვა ვერ მოხერხდა. განაახლეთ გვერდი და სცადეთ თავიდან.",
+    "contentInjection": "სკრიპტის ჩასმა ვერ მოხერხდა",
+    "contentScript": "სკრიპტის შეცდომა",
+    "extensionContext": "გაფართოების კონტექსტი ხელმისაწვდომი არ არის",
+    "noUrl": "URL ხელმისაწვდომი არ არის",
+    "unsupportedSite": "ეს საიტი ჯერ არ არის მხარდაჭერილი",
+    "unsupportedWebsite": "მხარდაუჭერელი საიტი",
+    "couldNotAccessTab": "ჩანართზე წვდომა ვერ მოხერხდა",
+    "storage": "საცავი"
+  },
+  "tabs": {
+    "currentPage": "მიმდინარე გვერდი",
+    "errors": "შეცდომები",
+    "noErrorsYet": "შეცდომები არ არის."
+  },
+  "unsupported": {
+    "title": "მხარდაუჭერელი საიტი",
+    "navigateTitle": "გადადით მხარდაჭერილ საიტებზე",
+    "description": "ეს გაფართოება მუშაობს myhome.ge და ss.ge-ზე. გაეცანით FlatFlow-ს ვებსაიტზე.",
+    "goToMyHome": "MyHome",
+    "goToSs": "SS.ge",
+    "soon": "მალე",
+    "goToFlatFlow": "გახსენი FlatFlow",
+    "message": "ეს საიტი ჯერ არ არის მხარდაჭერილი"
+  },
+  "selectListing": {
+    "title": "აირჩიეთ განცხადება",
+    "description": "ახლა MyHome-ის მთავარ გვერდზე ხართ. გადადით იმ განცხადების გვერდზე, რომელიც გსურთ ატვირთოთ."
+  },
+  "statementSuccess": {
+    "title": "თქვენ წარმატებით დაასრულეთ განაცხადი.",
+    "description": "მადლობა, რომ იყენებთ FlatFlow-ს."
+  },
+  "parsingIssues": {
+    "label": "პარსინგის პრობლემები:"
+  },
+  "listing": {
+    "untitled": "განცხადება სათაურის გარეშე"
+  },
+  "common": {
+    "altLogo": "FlatFlow"
+  }
+}

@@ -1,3 +1,7 @@
+/**
+ * Legacy/default Vite app component. The extension UI runs in the Chrome side panel
+ * and is mounted from main.tsx as the SidePanel component (src/sidepanel/SidePanel.tsx).
+ */
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 

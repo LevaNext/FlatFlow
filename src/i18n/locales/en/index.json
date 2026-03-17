@@ -1,0 +1,72 @@
+{
+  "app": {
+    "title": "FlatFlow",
+    "settings": "Settings",
+    "settingsAria": "Settings"
+  },
+  "theme": {
+    "label": "Theme",
+    "dark": "Dark",
+    "light": "Light"
+  },
+  "lang": {
+    "ka": "Georgian",
+    "en": "English",
+    "ru": "Russian",
+    "shortKa": "KA",
+    "shortEn": "EN",
+    "shortRu": "RU"
+  },
+  "upload": {
+    "myHome": "Upload to MyHome"
+  },
+  "status": {
+    "parsing": "Parsing listing…",
+    "checking": "Checking…",
+    "ssComingSoon": "SS.ge parsing coming soon"
+  },
+  "errors": {
+    "failedParse": "Failed to parse listing",
+    "refreshPage": "Could not read page. Refresh the listing page and try again.",
+    "contentInjection": "Content script injection failed",
+    "contentScript": "Content script error",
+    "extensionContext": "Extension context not available",
+    "noUrl": "No URL available",
+    "unsupportedSite": "This website is not supported yet",
+    "unsupportedWebsite": "Unsupported website",
+    "couldNotAccessTab": "Could not access tab",
+    "storage": "Storage"
+  },
+  "tabs": {
+    "currentPage": "Current Page",
+    "errors": "Errors",
+    "noErrorsYet": "No errors yet."
+  },
+  "unsupported": {
+    "title": "Unsupported Website",
+    "navigateTitle": "Navigate to supported websites",
+    "description": "This extension works on myhome.ge and ss.ge. Visit the FlatFlow website to learn more.",
+    "goToMyHome": "MyHome",
+    "goToSs": "SS.ge",
+    "soon": "Soon",
+    "goToFlatFlow": "Open FlatFlow",
+    "message": "This website is not supported yet"
+  },
+  "selectListing": {
+    "title": "Select a Listing to Continue",
+    "description": "You're currently on the MyHome homepage. Please navigate to the specific listing page you want to upload."
+  },
+  "statementSuccess": {
+    "title": "You successfully completed the application.",
+    "description": "Thank you for using FlatFlow."
+  },
+  "parsingIssues": {
+    "label": "Parsing issues:"
+  },
+  "listing": {
+    "untitled": "Untitled listing"
+  },
+  "common": {
+    "altLogo": "FlatFlow"
+  }
+}

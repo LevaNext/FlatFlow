@@ -3,9 +3,9 @@
 @tailwind utilities;
 
 /*
-  Single global theme (app + extension popup).
+  Single global theme (app + Chrome side panel).
   Preset: base=radix, style=mira, baseColor=gray, theme=blue, radius=default.
-  Popup imports this file via: import "../index.css"
+  Side panel imports this file via: import "../index.css"
 */
 @layer base {
   :root {
@@ -63,25 +63,32 @@
   }
 
   /*
-   * Popup: html/body transparent; #app-container is the rounded wrapper that clips content.
-   * Chrome popup body doesn't support border-radius, so we use an inner wrapper.
+   * Chrome side panel: full width and height; #app-container fills the panel.
    */
-  html.popup-html,
-  html.popup-html body.popup-page {
+  html.side-panel-html {
     margin: 0;
     padding: 0;
     background: transparent;
     box-sizing: border-box;
+    width: 100%;
+    height: 100%;
   }
-  html.popup-html body.popup-page {
-    min-width: 400px;
-    min-height: 500px;
+  html.side-panel-html body.side-panel-page {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
+    min-width: 0;
   }
   #app-container {
-    width: 400px;
-    height: 500px;
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
     background-color: #ffffff;
-    border-radius: 16px;
+    border-radius: 0;
     overflow: hidden;
     box-sizing: border-box;
   }
@@ -92,16 +99,31 @@
     display: flex;
     width: 100%;
     height: 100%;
+    min-height: 100%;
   }
 }
 
 @layer components {
-  /* Popup root: subtle shadow only (no border) */
-  .popup-root-shadow {
+  /* Side panel root: subtle shadow only (no border) */
+  .side-panel-root-shadow {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   }
 
-  .dark .popup-root-shadow {
+  .dark .side-panel-root-shadow {
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Bounce animation for loading logo (side panel + overlay) */
+  @keyframes flatflow-bounce {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-12px);
+    }
+  }
+  .flatflow-loading-logo {
+    animation: flatflow-bounce 0.9s ease-in-out infinite;
   }
 }

@@ -13,21 +13,29 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
-      input: {
-        index: path.resolve(__dirname, "index.html"),
-        popup: path.resolve(__dirname, "popup.html"),
-        content: path.resolve(__dirname, "src/extension/content.ts"),
-      },
+      input: [
+        path.resolve(__dirname, "index.html"),
+        path.resolve(__dirname, "sidepanel.html"),
+      ],
       output: {
-        entryFileNames: (chunkInfo) =>
-          chunkInfo.name === "content"
-            ? "content.js"
-            : "assets/[name]-[hash].js",
+        entryFileNames: "assets/[name]-[hash].js",
         chunkFileNames: "assets/[name]-[hash].js",
         assetFileNames: "assets/[name]-[hash][extname]",
+        manualChunks(id) {
+          if (id.includes("node_modules")) {
+            if (id.includes("react") || id.includes("react-dom")) {
+              return "vendor-react";
+            }
+            if (id.includes("@radix-ui")) {
+              return "vendor-ui";
+            }
+            return "vendor";
+          }
+        },
       },
     },
     outDir: "dist",
     emptyOutDir: true,
+    chunkSizeWarningLimit: 4096,
   },
 });
