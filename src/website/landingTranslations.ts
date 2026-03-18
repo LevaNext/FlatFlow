@@ -9,7 +9,6 @@ export const landingTranslations = {
       home: "მთავარი",
       faq: "FAQ",
       privacy: "Privacy Policy",
-      donation: "Donate",
     },
     hero: {
       headline: "განცხადებების ავტომატური შევსება ერთ კლიკში",
@@ -51,14 +50,16 @@ export const landingTranslations = {
       noStorage: "ჩვენ არ ვინახავთ თქვენს მონაცემებს",
       local: "ყველაფერი მუშაობს ლოკალურად",
     },
-    donation: {
-      title: "დონაცია",
-      soon: "მალე",
+    homeDonation: {
+      eyebrow: "მხარდაჭერა",
+      title: "SS.ge-ის ინტეგრაცია — სრული მხარდაჭერა",
+      body: "შემოწირულება SS.ge-ის სრულ ინტეგრაციას ემსახურება FlatFlow-ში. გადაიხადეთ KISA-ს საშუალებით.",
+      ctaKisa: "შემოწირულება KISA-ზე",
+      qrCaption: "სკანირება",
     },
     footer: {
       privacy: "Privacy Policy",
       faq: "FAQ",
-      donation: "Donate",
       copyright: "FlatFlow",
     },
   },
@@ -67,7 +68,6 @@ export const landingTranslations = {
       home: "Home",
       faq: "FAQ",
       privacy: "Privacy Policy",
-      donation: "Donate",
     },
     hero: {
       headline: "Auto-fill listings in one click",
@@ -109,14 +109,16 @@ export const landingTranslations = {
       noStorage: "We don't store your data",
       local: "Everything runs locally",
     },
-    donation: {
-      title: "Donation",
-      soon: "Soon",
+    homeDonation: {
+      eyebrow: "SS.ge",
+      title: "Full support for SS.ge integration",
+      body: "Donations fund completing SS.ge support in FlatFlow. Give via KISA—scan the QR or open the link.",
+      ctaKisa: "Donate on KISA",
+      qrCaption: "Scan",
     },
     footer: {
       privacy: "Privacy Policy",
       faq: "FAQ",
-      donation: "Donate",
       copyright: "FlatFlow",
     },
   },
@@ -125,7 +127,6 @@ export const landingTranslations = {
       home: "Главная",
       faq: "FAQ",
       privacy: "Privacy Policy",
-      donation: "Donate",
     },
     hero: {
       headline: "Автозаполнение объявлений в один клик",
@@ -167,14 +168,16 @@ export const landingTranslations = {
       noStorage: "Мы не храним ваши данные",
       local: "Всё работает локально",
     },
-    donation: {
-      title: "Донат",
-      soon: "Скоро",
+    homeDonation: {
+      eyebrow: "SS.ge",
+      title: "Полная поддержка интеграции SS.ge",
+      body: "Средства идут на завершение поддержки ss.ge в FlatFlow. KISA — QR или ссылка.",
+      ctaKisa: "Пожертвовать на KISA",
+      qrCaption: "Скан",
     },
     footer: {
       privacy: "Privacy Policy",
       faq: "FAQ",
-      donation: "Donate",
       copyright: "FlatFlow",
     },
   },
