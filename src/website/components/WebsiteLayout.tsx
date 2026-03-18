@@ -6,7 +6,6 @@ import {
   ChevronDown,
   FileText,
   Globe,
-  Heart,
   HelpCircle,
   Moon,
   Sun,
@@ -142,16 +141,6 @@ export function WebsiteLayout() {
               <Link to="/faq">
                 <HelpCircle className="h-4 w-4" />
                 {t.footer.faq}
-              </Link>
-            </Button>
-            <Button
-              asChild
-              variant="link"
-              className="gap-1.5 text-muted-foreground hover:text-foreground"
-            >
-              <Link to="/donation">
-                <Heart className="h-4 w-4" />
-                {t.footer.donation}
               </Link>
             </Button>
           </div>

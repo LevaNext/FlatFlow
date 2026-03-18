@@ -4,12 +4,11 @@
  */
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import "../index.css";
 import { Toaster } from "@/components/ui/toaster";
 import { WebsiteLayout } from "./components/WebsiteLayout";
 import { LandingProvider } from "./context/LandingContext";
-import { DonationPage } from "./pages/DonationPage";
 import { FaqPage } from "./pages/FaqPage";
 import { LandingPage } from "./pages/LandingPage";
 import { PrivacyPage } from "./pages/PrivacyPage";
@@ -26,7 +25,12 @@ createRoot(root).render(
             <Route index element={<LandingPage />} />
             <Route path="faq" element={<FaqPage />} />
             <Route path="privacy" element={<PrivacyPage />} />
-            <Route path="donation" element={<DonationPage />} />
+            <Route
+              path="donation"
+              element={
+                <Navigate to={{ pathname: "/", hash: "donation" }} replace />
+              }
+            />
           </Route>
         </Routes>
       </BrowserRouter>
