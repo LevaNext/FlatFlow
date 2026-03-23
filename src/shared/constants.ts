@@ -37,5 +37,5 @@ export const LANDING_PAGE_URL = "https://flatflowextension.netlify.app/";
 
 /** KISA donation page for FlatFlow (scan QR or open link). */
 export const KISA_DONATE_URL =
-  "https://www.kisa.ge/donate/m2BNn6re85DU17Na1RR4";
+  "https://www.kisa.ge/donate/pydxz4QnCDjyBtX2UULp";
 
