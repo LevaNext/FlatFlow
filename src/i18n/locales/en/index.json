@@ -12,10 +12,8 @@
   "lang": {
     "ka": "Georgian",
     "en": "English",
-    "ru": "Russian",
     "shortKa": "KA",
-    "shortEn": "EN",
-    "shortRu": "RU"
+    "shortEn": "EN"
   },
   "upload": {
     "myHome": "Upload to MyHome"
@@ -45,7 +43,7 @@
   "unsupported": {
     "title": "Unsupported Website",
     "navigateTitle": "Navigate to supported websites",
-    "description": "This extension works on myhome.ge and ss.ge. Visit the FlatFlow website to learn more.",
+    "description": "This extension works on myhome.ge and ss.ge. Visit flatflow.ge to learn more.",
     "goToMyHome": "MyHome",
     "goToSs": "SS.ge",
     "soon": "Soon",

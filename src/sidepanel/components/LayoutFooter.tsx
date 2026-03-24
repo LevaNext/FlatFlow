@@ -1,5 +1,5 @@
 /**
- * Layout footer: language selector (ka, en, ru).
+ * Layout footer: language selector (ka, en).
  */
 
 import Flag from "react-world-flags";
@@ -10,7 +10,6 @@ import { useTranslation } from "@/i18n";
 const LANGUAGE_FLAG_CODE: Record<Language, string> = {
   ka: "ge",
   en: "gb",
-  ru: "ru",
 };
 
 type LayoutFooterProps = Readonly<{
@@ -53,15 +52,6 @@ export function LayoutFooter({
         >
           <Flag code={LANGUAGE_FLAG_CODE.en} className="size-4 shrink-0" />
           <span className="text-xs">{t("lang.shortEn")}</span>
-        </ToggleGroupItem>
-        <ToggleGroupItem
-          value="ru"
-          aria-label={t("lang.ru")}
-          className="flex-1 gap-1.5 px-3"
-          title={t("lang.ru")}
-        >
-          <Flag code={LANGUAGE_FLAG_CODE.ru} className="size-4 shrink-0" />
-          <span className="text-xs">{t("lang.shortRu")}</span>
         </ToggleGroupItem>
       </ToggleGroup>
     </footer>

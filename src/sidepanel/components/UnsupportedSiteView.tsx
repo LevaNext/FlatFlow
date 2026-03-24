@@ -7,11 +7,12 @@ import { useCallback } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/i18n";
-import { MYHOME_GE, SS_GE } from "@/shared/constants";
+import { LANDING_PAGE_URL, MYHOME_GE, SS_GE } from "@/shared/constants";
 import { getLogoUrl } from "@/utils/logo";
 import {
   Empty,
   EmptyContent,
+  EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
@@ -43,6 +44,9 @@ export function UnsupportedSiteView(): React.ReactElement {
           <EmptyTitle className="mt-8">
             {t("unsupported.navigateTitle")}
           </EmptyTitle>
+          <EmptyDescription className="mt-2 max-w-sm">
+            {t("unsupported.description")}
+          </EmptyDescription>
         </EmptyHeader>
         <EmptyContent className="flex w-full max-w-sm flex-col gap-3">
           <Button
@@ -65,6 +69,13 @@ export function UnsupportedSiteView(): React.ReactElement {
             >
               {t("unsupported.soon")}
             </Badge>
+          </Button>
+          <Button
+            onClick={() => goTo(LANDING_PAGE_URL)}
+            variant="secondary"
+            className="h-12 w-full"
+          >
+            {t("unsupported.goToFlatFlow")}
           </Button>
         </EmptyContent>
       </Empty>

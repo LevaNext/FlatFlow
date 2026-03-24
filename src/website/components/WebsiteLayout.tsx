@@ -38,7 +38,7 @@ export function WebsiteLayout() {
       <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
           <Link
-            to="/"
+            to={`/${lang}`}
             className="flex items-center gap-2 transition-opacity hover:opacity-90"
           >
             <img
@@ -79,12 +79,6 @@ export function WebsiteLayout() {
                     {lang === "en" && <Check className="h-4 w-4" />}
                   </span>{" "}
                   English
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setLang("ru")}>
-                  <span className="inline-flex w-4 shrink-0 justify-center mr-2">
-                    {lang === "ru" && <Check className="h-4 w-4" />}
-                  </span>{" "}
-                  Русский
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -128,7 +122,7 @@ export function WebsiteLayout() {
               variant="link"
               className="gap-1.5 text-muted-foreground hover:text-foreground"
             >
-              <Link to="/privacy">
+              <Link to={`/${lang}/privacy`}>
                 <FileText className="h-4 w-4" />
                 {t.footer.privacy}
               </Link>
@@ -138,7 +132,7 @@ export function WebsiteLayout() {
               variant="link"
               className="gap-1.5 text-muted-foreground hover:text-foreground"
             >
-              <Link to="/faq">
+              <Link to={`/${lang}/faq`}>
                 <HelpCircle className="h-4 w-4" />
                 {t.footer.faq}
               </Link>

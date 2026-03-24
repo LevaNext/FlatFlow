@@ -5,9 +5,8 @@
 
 import en from "./locales/en/index.json";
 import ka from "./locales/ka/index.json";
-import ru from "./locales/ru/index.json";
 
-export type Language = "ka" | "en" | "ru";
+export type Language = "ka" | "en";
 
 /** Recursively collect all dot-separated paths to string leaves in a nested object. */
 type LeafPaths<T, Prefix extends string = ""> = T extends string
@@ -31,7 +30,6 @@ export type Translations = Record<string, unknown>;
 const localeByLang: Record<Language, Translations> = {
   en: en as Translations,
   ka: ka as Translations,
-  ru: ru as Translations,
 };
 
 function getByPath(obj: Translations, path: string): string | undefined {
