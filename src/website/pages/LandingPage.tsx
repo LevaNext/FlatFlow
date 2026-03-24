@@ -1,6 +1,6 @@
 /**
  * Modern landing page for FlatFlow Chrome Extension.
- * Georgian (default) / English / Russian, dark/light theme. Composed from landing section components.
+ * Georgian (default) / English, dark/light theme. Composed from landing section components.
  */
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";

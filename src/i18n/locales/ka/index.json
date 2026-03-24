@@ -12,10 +12,8 @@
   "lang": {
     "ka": "ქართული",
     "en": "English",
-    "ru": "Русский",
     "shortKa": "ქართ",
-    "shortEn": "EN",
-    "shortRu": "RU"
+    "shortEn": "EN"
   },
   "upload": {
     "myHome": "ატვირთე MyHome-ზე"
@@ -45,7 +43,7 @@
   "unsupported": {
     "title": "მხარდაუჭერელი საიტი",
     "navigateTitle": "გადადით მხარდაჭერილ საიტებზე",
-    "description": "ეს გაფართოება მუშაობს myhome.ge და ss.ge-ზე. გაეცანით FlatFlow-ს ვებსაიტზე.",
+    "description": "ეს გაფართოება მუშაობს myhome.ge და ss.ge-ზე. მეტის სანახავად იხილეთ flatflow.ge.",
     "goToMyHome": "MyHome",
     "goToSs": "SS.ge",
     "soon": "მალე",

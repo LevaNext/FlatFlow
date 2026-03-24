@@ -33,9 +33,8 @@ export const SS_GE = {
 export const SUPPORTED_DOMAINS = [MYHOME_GE.domain, SS_GE.domain] as const;
 
 /** Landing page URL when user clicks extension on a non-supported site. */
-export const LANDING_PAGE_URL = "https://flatflowextension.netlify.app/";
+export const LANDING_PAGE_URL = "https://flatflow.ge/";
 
 /** KISA donation page for FlatFlow (scan QR or open link). */
 export const KISA_DONATE_URL =
   "https://www.kisa.ge/donate/pydxz4QnCDjyBtX2UULp";
-

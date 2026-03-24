@@ -3,10 +3,11 @@ import { FileText } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useLanding } from "../../context/LandingContext";
-import { privacySections } from "./privacySections";
+import { getPrivacySections } from "./privacySections";
 
 export function PrivacyContent() {
-  const { t } = useLanding();
+  const { t, lang } = useLanding();
+  const privacySections = getPrivacySections(lang);
 
   return (
     <motion.article
@@ -25,7 +26,7 @@ export function PrivacyContent() {
               {t.privacy.title}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Last updated: March 2025
+              {t.privacy.lastUpdated}
             </p>
           </div>
         </CardHeader>

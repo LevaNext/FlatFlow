@@ -1,5 +1,6 @@
 /**
  * Shared language and theme state for the website (landing, FAQ, Privacy).
+ * `lang` is controlled by the locale segment in the URL (see LocaleLayout).
  */
 import {
   createContext,
@@ -53,34 +54,21 @@ function useTheme() {
   return { dark, toggle };
 }
 
-const LANG_STORAGE_KEY = "flatflow-lang";
-
-function useLang() {
-  const [lang, setLangState] = useState<LandingLang>(() => {
-    if (typeof window === "undefined") return "ka";
-    try {
-      const stored = localStorage.getItem(LANG_STORAGE_KEY);
-      if (stored === "ka" || stored === "en" || stored === "ru") return stored;
-    } catch {}
-    return "ka";
-  });
-
-  const setLang = useCallback((next: LandingLang) => {
-    setLangState(next);
-    try {
-      localStorage.setItem(LANG_STORAGE_KEY, next);
-    } catch {}
-  }, []);
-
-  return { lang, setLang };
-}
-
 export function LandingProvider({
   children,
-}: Readonly<{ children: ReactNode }>) {
-  const { lang, setLang } = useLang();
+  lang,
+  setLang,
+}: Readonly<{
+  children: ReactNode;
+  lang: LandingLang;
+  setLang: (lang: LandingLang) => void;
+}>) {
   const { dark, toggle } = useTheme();
   const t = landingTranslations[lang];
+
+  useEffect(() => {
+    document.documentElement.lang = lang === "ka" ? "ka" : "en";
+  }, [lang]);
 
   const value = useMemo<LandingContextValue>(
     () => ({

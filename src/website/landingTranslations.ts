@@ -1,14 +1,42 @@
 /**
- * Landing page copy in Georgian (default), English, and Russian.
+ * Landing page copy in Georgian (default) and English.
  */
-export type LandingLang = "ka" | "en" | "ru";
+export type LandingLang = "ka" | "en";
+
+export const DEFAULT_LANDING_LANG: LandingLang = "ka";
+
+export const LANG_STORAGE_KEY = "flatflow-lang";
+
+export function isLandingLang(
+  value: string | null | undefined,
+): value is LandingLang {
+  return value === "ka" || value === "en";
+}
+
+/** Used for `/` and legacy `/faq`-style redirects (localStorage, then browser). */
+export function getPreferredLandingLang(): LandingLang {
+  if (typeof window === "undefined") return DEFAULT_LANDING_LANG;
+  try {
+    const stored = localStorage.getItem(LANG_STORAGE_KEY);
+    if (isLandingLang(stored)) {
+      return stored;
+    }
+    if (stored === "ru") {
+      localStorage.setItem(LANG_STORAGE_KEY, "ka");
+      return "ka";
+    }
+  } catch {}
+  const nav = navigator.language.toLowerCase();
+  if (nav.startsWith("ka")) return "ka";
+  return "en";
+}
 
 export const landingTranslations = {
   ka: {
     nav: {
       home: "მთავარი",
       faq: "FAQ",
-      privacy: "Privacy Policy",
+      privacy: "კონფიდენციალურობის პოლიტიკა",
     },
     hero: {
       headline: "განცხადებების ავტომატური შევსება ერთ კლიკში",
@@ -46,7 +74,8 @@ export const landingTranslations = {
       a4: "დიახ, FlatFlow უფასოა.",
     },
     privacy: {
-      title: "კონფიდენციალურობა",
+      title: "კონფიდენციალურობის პოლიტიკა",
+      lastUpdated: "ბოლო განახლება: მარტი 2025",
       noStorage: "ჩვენ არ ვინახავთ თქვენს მონაცემებს",
       local: "ყველაფერი მუშაობს ლოკალურად",
     },
@@ -58,7 +87,7 @@ export const landingTranslations = {
       qrCaption: "სკანირება",
     },
     footer: {
-      privacy: "Privacy Policy",
+      privacy: "კონფიდენციალურობის პოლიტიკა",
       faq: "FAQ",
       copyright: "FlatFlow",
     },
@@ -105,7 +134,8 @@ export const landingTranslations = {
       a4: "Yes, FlatFlow is free.",
     },
     privacy: {
-      title: "Privacy",
+      title: "Privacy Policy",
+      lastUpdated: "Last updated: March 2025",
       noStorage: "We don't store your data",
       local: "Everything runs locally",
     },
@@ -115,65 +145,6 @@ export const landingTranslations = {
       body: "Donations fund completing SS.ge support in FlatFlow. Give via KISA—scan the QR or open the link.",
       ctaKisa: "Donate on KISA",
       qrCaption: "Scan",
-    },
-    footer: {
-      privacy: "Privacy Policy",
-      faq: "FAQ",
-      copyright: "FlatFlow",
-    },
-  },
-  ru: {
-    nav: {
-      home: "Главная",
-      faq: "FAQ",
-      privacy: "Privacy Policy",
-    },
-    hero: {
-      headline: "Автозаполнение объявлений в один клик",
-      subtext: "",
-      cta: "Установить Chrome Extension",
-      soon: "ss.ge — Скоро",
-      mockBadge: "✓ FlatFlow автоматически заполняет поля",
-    },
-    features: {
-      title: "Возможности",
-      autoFill: "Автозаполнение",
-      autoFillSub: "Заполнение в один клик",
-      saveTime: "Экономия времени",
-      saveTimeSub: "Меньше повторений",
-      accurateData: "Точный перенос данных",
-      accurateDataSub: "Без ошибок",
-      manifestV3: "Поддержка Chrome Manifest V3",
-      manifestV3Sub: "Современный стандарт",
-    },
-    howItWorks: {
-      title: "Как это работает",
-      step1: "Откройте объявление",
-      step2: "FlatFlow парсит данные",
-      step3: "Автоматически заполняет поля на новой странице",
-    },
-    faq: {
-      title: "FAQ",
-      q1: "Как это работает?",
-      q2: "Это безопасно?",
-      q3: "Какие сайты поддерживаются?",
-      q4: "Это бесплатно?",
-      a1: "FlatFlow читает страницу объявления в фоне, извлекает данные и автоматически заполняет форму. Всё происходит в вашем браузере.",
-      a2: "Да. Мы не отправляем и не храним ваши данные. Всё работает локально на вашем устройстве.",
-      a3: "Сейчас поддерживается: myhome.ge. ss.ge — скоро.",
-      a4: "Да, FlatFlow бесплатен.",
-    },
-    privacy: {
-      title: "Конфиденциальность",
-      noStorage: "Мы не храним ваши данные",
-      local: "Всё работает локально",
-    },
-    homeDonation: {
-      eyebrow: "SS.ge",
-      title: "Полная поддержка интеграции SS.ge",
-      body: "Средства идут на завершение поддержки ss.ge в FlatFlow. KISA — QR или ссылка.",
-      ctaKisa: "Пожертвовать на KISA",
-      qrCaption: "Скан",
     },
     footer: {
       privacy: "Privacy Policy",
