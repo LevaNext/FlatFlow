@@ -56,7 +56,7 @@ function SidePanel(): React.ReactElement {
     }
   }, [theme]);
 
-  // Track panel open/closed so extension icon click can toggle (close when open).
+  // Track panel open/closed so extension icon click can toggle (close when open)
   useEffect(() => {
     void chrome.storage.session.set({ [STORAGE_KEY_SIDE_PANEL_OPEN]: true });
 
