@@ -55,7 +55,7 @@
     "description": "You're currently on the MyHome homepage. Please navigate to the specific listing page you want to upload."
   },
   "statementSuccess": {
-    "title": "You successfully completed the application.",
+    "title": "You have successfully filled out the application.",
     "description": "Thank you for using FlatFlow."
   },
   "parsingIssues": {
@@ -63,6 +63,13 @@
   },
   "listing": {
     "untitled": "Untitled listing"
+  },
+  "donation": {
+    "eyebrow": "SS.ge",
+    "title": "Full support for SS.ge integration",
+    "body": "Donations fund completing SS.ge support in FlatFlow. Give via KISA—scan the QR or open the link.",
+    "ctaKisa": "Donate on KISA",
+    "qrCaption": "Scan"
   },
   "common": {
     "altLogo": "FlatFlow"

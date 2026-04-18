@@ -13,6 +13,25 @@ export const PARSED_LISTING_STORAGE_KEY = "parsedListing";
 export interface ParsedListingMeta {
   source: ListingSource;
   parsedAt: number;
+  /** Normalized listing tab URL when parsed; used to skip re-parsing the same page. */
+  pageUrl?: string;
+}
+
+/** Normalize a listing page URL for stable comparison (no hash, trimmed trailing slash on path). */
+export function normalizeListingPageUrl(url: string): string {
+  const trimmed = url.trim();
+  if (trimmed === "") return "";
+  try {
+    const u = new URL(trimmed);
+    u.hash = "";
+    const path =
+      u.pathname.length > 1 && u.pathname.endsWith("/")
+        ? u.pathname.slice(0, -1)
+        : u.pathname;
+    return `${u.origin.toLowerCase()}${path}${u.search}`;
+  } catch {
+    return trimmed;
+  }
 }
 
 export interface ParsedListingPayload {

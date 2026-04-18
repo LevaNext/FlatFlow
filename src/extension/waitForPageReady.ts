@@ -1,7 +1,8 @@
 /**
- * Waits for listing page to be ready before scraping: target elements present
- * and DOM stable (no mutations for debounce period). Uses MutationObserver.
- * Reusable for any site by passing configurable selectors.
+ * Waits for listing page to be ready before scraping. Two strategies:
+ * - domQuiet: any selector matches, then DOM has no mutations for debounceMs (legacy; slow on busy pages).
+ * - allMatchedSettle: each selector string must match (use commas inside one string for OR); then a short
+ *   settle timer runs once — lazy images/ads won't keep resetting the wait.
  */
 
 const OVERLAY_ID = "flatflow-wait-overlay";
@@ -15,15 +16,29 @@ function getLogoUrl(): string {
 }
 
 const DEFAULT_DEBOUNCE_MS = 900;
+const DEFAULT_SETTLE_MS = 320;
 const DEFAULT_TIMEOUT_MS = 10_000;
 
+export type WaitForPageReadyMode = "domQuiet" | "allMatchedSettle";
+
 export interface WaitForPageReadyOptions {
-  /** CSS selectors; at least one must match for page to be considered ready. */
+  /**
+   * Selector groups. In domQuiet mode: at least one must match. In allMatchedSettle mode: every entry
+   * must match (each entry may be a comma list, i.e. OR within the group).
+   */
   selectors: string[];
-  /** Start scraping only after no DOM mutations for this many ms. */
+  mode?: WaitForPageReadyMode;
+  /** domQuiet only: resolve after no mutations for this long. */
   debounceMs?: number;
+  /** allMatchedSettle only: after all groups match, wait this long then resolve. */
+  settleMs?: number;
   /** Max wait time; resolves anyway after this (and scraping can proceed). */
   timeoutMs?: number;
+  /**
+   * When true, skip the default full-page logo overlay. Use when the caller shows its own
+   * progress UI (e.g. {@link createParseListingProgressOverlay}).
+   */
+  omitOverlay?: boolean;
 }
 
 function hasAnyElement(doc: Document, selectors: string[]): boolean {
@@ -35,6 +50,18 @@ function hasAnyElement(doc: Document, selectors: string[]): boolean {
     }
   }
   return false;
+}
+
+/** True when every group matches at least one element (invalid selector → group fails). */
+function allSelectorGroupsMatch(doc: Document, groups: string[]): boolean {
+  for (const sel of groups) {
+    try {
+      if (!doc.querySelector(sel)) return false;
+    } catch {
+      return false;
+    }
+  }
+  return true;
 }
 
 function createOverlay(doc: Document): () => void {
@@ -118,10 +145,8 @@ function createOverlay(doc: Document): () => void {
 }
 
 /**
- * Waits until (1) at least one of the given selectors matches an element in the DOM,
- * and (2) the DOM has been stable (no mutations) for debounceMs. Uses MutationObserver
- * so elements added later by React/SPA are detected. If elements already exist, starts
- * the stability timer immediately. Resolves after timeoutMs regardless.
+ * Waits for readiness per `mode`, then resolves. Uses MutationObserver so SPA inserts are detected.
+ * Always resolves after timeoutMs regardless.
  */
 export function waitForPageReady(
   doc: Document,
@@ -129,17 +154,26 @@ export function waitForPageReady(
 ): Promise<void> {
   const {
     selectors,
+    mode = "domQuiet",
     debounceMs = DEFAULT_DEBOUNCE_MS,
+    settleMs = DEFAULT_SETTLE_MS,
     timeoutMs = DEFAULT_TIMEOUT_MS,
+    omitOverlay = false,
   } = options;
 
   if (selectors.length === 0) {
     return Promise.resolve();
   }
 
+  const root = doc.body ?? doc.documentElement;
+  if (!root) {
+    return Promise.resolve();
+  }
+
   return new Promise((resolve) => {
-    const removeOverlay = createOverlay(doc);
+    const removeOverlay = omitOverlay ? () => {} : createOverlay(doc);
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    let settleTimer: ReturnType<typeof setTimeout> | null = null;
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
     let resolved = false;
 
@@ -147,31 +181,48 @@ export function waitForPageReady(
       if (resolved) return;
       resolved = true;
       if (debounceTimer != null) clearTimeout(debounceTimer);
+      if (settleTimer != null) clearTimeout(settleTimer);
       if (timeoutId != null) clearTimeout(timeoutId);
       observer.disconnect();
       removeOverlay();
       resolve();
     }
 
-    function scheduleDebounce() {
+    function scheduleDomQuiet() {
       if (!hasAnyElement(doc, selectors)) return;
       if (debounceTimer != null) clearTimeout(debounceTimer);
       debounceTimer = setTimeout(finish, debounceMs);
     }
 
+    /** Listing shell: all groups present, then one short settle; do not reset on unrelated mutations. */
+    function scheduleAllMatchedSettle() {
+      if (!allSelectorGroupsMatch(doc, selectors)) {
+        if (settleTimer != null) {
+          clearTimeout(settleTimer);
+          settleTimer = null;
+        }
+        return;
+      }
+      if (settleTimer == null) {
+        settleTimer = setTimeout(finish, settleMs);
+      }
+    }
+
+    const tick =
+      mode === "allMatchedSettle" ? scheduleAllMatchedSettle : scheduleDomQuiet;
+
     const observer = new MutationObserver(() => {
-      scheduleDebounce();
+      tick();
     });
 
-    observer.observe(doc.body, {
+    observer.observe(root, {
       childList: true,
       subtree: true,
       attributes: true,
       characterData: true,
     });
 
-    // If elements already exist, start debounce immediately
-    scheduleDebounce();
+    tick();
 
     timeoutId = setTimeout(finish, timeoutMs);
   });
