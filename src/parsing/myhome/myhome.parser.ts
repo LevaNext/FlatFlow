@@ -11,6 +11,7 @@ import { getListingMeta } from "./selectors/getListingMeta";
 import { getPageLang } from "./selectors/getPageLang";
 import { getPrice } from "./selectors/getPrice";
 import { getProjectType } from "./selectors/getProjectType";
+import { getPropertyType } from "./selectors/getPropertyType";
 import { getStatus } from "./selectors/getStatus";
 import { getTitle } from "./selectors/getTitle";
 
@@ -158,6 +159,98 @@ function applyLang(data: Partial<ListingData>, doc: Document): void {
   data.lang = getPageLang(doc);
 }
 
+/** DOM row/chips override when present; title-based value may already be set from {@link applyTitle}. */
+function applyPropertyTypeFromDom(
+  data: Partial<ListingData>,
+  doc: Document,
+): void {
+  const result = getPropertyType(doc);
+  if (result.ok && result.value.trim().length > 0) {
+    data.propertyType = result.value.trim();
+  }
+}
+
+/** Ordered phases: one step per `selectors/get*.ts` reader (+ title), for listing-tab progress UI. */
+export const MYHOME_PARSE_PROGRESS_PHASE_ORDER = [
+  "title",
+  "propertyType",
+  "images",
+  "price",
+  "address",
+  "listingMeta",
+  "listingAttributes",
+  "status",
+  "condition",
+  "projectType",
+  "pageLang",
+] as const;
+
+export type MyHomeParseProgressPhase =
+  (typeof MYHOME_PARSE_PROGRESS_PHASE_ORDER)[number];
+
+const MYHOME_PHASES: {
+  phase: MyHomeParseProgressPhase;
+  run: (
+    data: Partial<ListingData>,
+    errors: ParserError[],
+    doc: Document,
+  ) => void;
+}[] = [
+  { phase: "title", run: (d, e, doc) => applyTitle(d, e, doc) },
+  {
+    phase: "propertyType",
+    run: (d, _e, doc) => applyPropertyTypeFromDom(d, doc),
+  },
+  { phase: "images", run: (d, e, doc) => applyImages(d, e, doc) },
+  { phase: "price", run: (d, e, doc) => applyPrice(d, e, doc) },
+  {
+    phase: "address",
+    run: (d, _e, doc) => {
+      applyAddress(d, doc);
+    },
+  },
+  {
+    phase: "listingMeta",
+    run: (d, _e, doc) => {
+      applyMeta(d, doc);
+    },
+  },
+  {
+    phase: "listingAttributes",
+    run: (d, _e, doc) => {
+      applyAttrs(d, doc);
+    },
+  },
+  {
+    phase: "status",
+    run: (d, _e, doc) => {
+      applyStatus(d, doc);
+    },
+  },
+  {
+    phase: "condition",
+    run: (d, _e, doc) => {
+      applyCondition(d, doc);
+    },
+  },
+  {
+    phase: "projectType",
+    run: (d, _e, doc) => {
+      applyProjectType(d, doc);
+    },
+  },
+  {
+    phase: "pageLang",
+    run: (d, _e, doc) => {
+      applyLang(d, doc);
+    },
+  },
+];
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 /**
  * Parses myhome.ge listing from the document. Only reads DOM; no upload or form logic.
  * Aggregates successful values and collects errors. Continues even if one selector fails.
@@ -165,17 +258,28 @@ function applyLang(data: Partial<ListingData>, doc: Document): void {
 export function parseMyHomeListing(doc: Document): ParserOutput<ListingData> {
   const data: Partial<ListingData> = { source: SOURCE };
   const errors: ParserError[] = [];
+  for (const { run } of MYHOME_PHASES) run(data, errors, doc);
+  return { data, errors };
+}
 
-  applyTitle(data, errors, doc);
-  applyImages(data, errors, doc);
-  applyPrice(data, errors, doc);
-  applyAddress(data, doc);
-  applyMeta(data, doc);
-  applyAttrs(data, doc);
-  applyStatus(data, doc);
-  applyCondition(data, doc);
-  applyProjectType(data, doc);
-  applyLang(data, doc);
-
+/**
+ * Same as {@link parseMyHomeListing} but invokes `beforePhase` before each stage and
+ * optionally waits `settleMs` after each run so the page overlay can update between steps.
+ */
+export async function parseMyHomeListingPhased(
+  doc: Document,
+  options: {
+    beforePhase: (phase: MyHomeParseProgressPhase) => void | Promise<void>;
+    settleMs?: number;
+  },
+): Promise<ParserOutput<ListingData>> {
+  const data: Partial<ListingData> = { source: SOURCE };
+  const errors: ParserError[] = [];
+  const settleMs = options.settleMs ?? 120;
+  for (const { phase, run } of MYHOME_PHASES) {
+    await options.beforePhase(phase);
+    run(data, errors, doc);
+    if (settleMs > 0) await delay(settleMs);
+  }
   return { data, errors };
 }

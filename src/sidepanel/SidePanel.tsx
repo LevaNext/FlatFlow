@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   MESSAGE_CLOSE_SIDE_PANEL,
   MESSAGE_PANEL_CLOSED,
@@ -9,6 +9,7 @@ import { type TranslationKey, TranslationProvider, t } from "@/i18n";
 import { detectSite, type SiteId } from "@/parsing";
 import {
   getParsedListing,
+  normalizeListingPageUrl,
   saveParsedListing,
 } from "@/storage/parsedListingStorage";
 import type { ListingData } from "@/types/listing";
@@ -34,6 +35,7 @@ function SidePanel(): React.ReactElement {
     isMyHomeRoot,
     isListingDetailPage,
     isLoading,
+    tabUrl,
   } = useActiveTabDomain();
   const [theme, setTheme] = useState<Theme>("dark");
   const [language, setLanguage] = useState<Language>("ka");
@@ -42,6 +44,8 @@ function SidePanel(): React.ReactElement {
   const [parsingErrors, setParsingErrors] = useState<ParserError[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  /** Tab URL of the last parse request (used when saving `pageUrl` to storage). */
+  const lastParseTabUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -51,16 +55,6 @@ function SidePanel(): React.ReactElement {
       root.classList.remove("dark");
     }
   }, [theme]);
-
-  useEffect(() => {
-    getParsedListing().then((result) => {
-      if (result.ok) {
-        setListing(result.value.data);
-        setParsingErrors(result.value.errors);
-        setSiteId(result.value.meta.source);
-      }
-    });
-  }, []);
 
   // Track panel open/closed so extension icon click can toggle (close when open).
   useEffect(() => {
@@ -123,12 +117,14 @@ function SidePanel(): React.ReactElement {
             response.listing.dealType,
           );
         }
+        const rawUrl = lastParseTabUrlRef.current;
         saveParsedListing({
           data: response.listing,
           errors: errs,
           meta: {
             source: response.listing.source,
             parsedAt: Date.now(),
+            ...(rawUrl ? { pageUrl: normalizeListingPageUrl(rawUrl) } : {}),
           },
         }).then(onListingSaved);
       } else {
@@ -245,16 +241,36 @@ function SidePanel(): React.ReactElement {
           return;
         }
 
+        lastParseTabUrlRef.current = tab.url ?? null;
         trySendParseMessage(tab.id, false);
       },
     );
   }, [trySendParseMessage, tForLang]);
 
-  // Only on myhome.ge/pr/... (listing detail page): show debounce loader and parse. Other myhome pages show "Select a listing".
+  // Listing detail: reuse cached parse for the same tab URL; otherwise parse once.
   useEffect(() => {
-    if (!isListingDetailPage) return;
-    requestListingFromCurrentTab();
-  }, [isListingDetailPage, requestListingFromCurrentTab]);
+    if (!isListingDetailPage || tabUrl == null) return;
+
+    const normalized = normalizeListingPageUrl(tabUrl);
+
+    void (async () => {
+      const stored = await getParsedListing();
+      if (
+        stored.ok &&
+        stored.value.meta.pageUrl != null &&
+        normalizeListingPageUrl(stored.value.meta.pageUrl) === normalized
+      ) {
+        setListing(stored.value.data);
+        setParsingErrors(stored.value.errors);
+        setSiteId(stored.value.meta.source);
+        setError(null);
+        setLoading(false);
+        return;
+      }
+
+      requestListingFromCurrentTab();
+    })();
+  }, [isListingDetailPage, tabUrl, requestListingFromCurrentTab]);
 
   const handleUploadMyHome = useCallback(() => {
     if (typeof chrome === "undefined" || !chrome.tabs) return;
@@ -312,6 +328,7 @@ function SidePanel(): React.ReactElement {
           </>
         );
       }
+      return <LoadingLogo />;
     }
     return <UploadButtons siteId={siteId} onMyHomeClick={handleUploadMyHome} />;
   };

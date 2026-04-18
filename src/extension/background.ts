@@ -1,7 +1,7 @@
 /**
  * Service worker: side panel on supported sites, image fetch.
  * On supported domain (myhome.ge, ss.ge) → open side panel.
- * Otherwise → navigate to FlatFlow landing page.
+ * Otherwise → open FlatFlow landing page in a new tab (same as “Open FlatFlow” in the side panel).
  */
 
 import { LANDING_PAGE_URL, SUPPORTED_DOMAINS } from "@/shared/constants";
@@ -84,8 +84,8 @@ chrome.action.onClicked.addListener((tab) => {
     return;
   }
 
-  console.log("[FlatFlow] redirect to landing page");
-  chrome.tabs.update(tab.id, { url: LANDING_PAGE_URL });
+  console.log("[FlatFlow] open landing page in new tab");
+  chrome.tabs.create({ url: LANDING_PAGE_URL });
 });
 
 function blobToDataUrl(blob: Blob): Promise<string> {

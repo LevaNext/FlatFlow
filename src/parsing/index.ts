@@ -5,7 +5,11 @@
 
 import type { ListingData, ListingSource } from "@/types/listing";
 import type { ParserError, ParserOutput } from "@/types/parser";
-import { parseMyHomeListing } from "./myhome/myhome.parser";
+import {
+  parseMyHomeListing,
+  parseMyHomeListingPhased,
+  type MyHomeParseProgressPhase,
+} from "./myhome/myhome.parser";
 import { parseSsListing } from "./ss/ss.parser";
 
 export type SiteId = import("./detectors/siteDetector").SiteId;
@@ -73,6 +77,33 @@ export function parseListing(
   }
 }
 
+/**
+ * MyHome listing parse with optional async hooks between DOM-read phases (for content-script UI).
+ */
+export async function parseMyHomeListingTabResultPhased(
+  doc: Document,
+  options: {
+    beforePhase: (phase: MyHomeParseProgressPhase) => void | Promise<void>;
+    settleMs?: number;
+  },
+): Promise<ParseListingResult> {
+  try {
+    const { data, errors } = await parseMyHomeListingPhased(doc, {
+      beforePhase: options.beforePhase,
+      settleMs: options.settleMs,
+    });
+    return { listing: buildListingFromMyHomeData(data), errors };
+  } catch {
+    return {
+      listing: null,
+      errors: [
+        { code: "PARSE_FAILED", message: "Parser threw an unexpected error." },
+      ],
+    };
+  }
+}
+
 export { detectSite } from "./detectors/siteDetector";
-export { parseMyHomeListing } from "./myhome/myhome.parser";
+export type { MyHomeParseProgressPhase } from "./myhome/myhome.parser";
+export { parseMyHomeListing, parseMyHomeListingPhased } from "./myhome/myhome.parser";
 export { parseSsListing } from "./ss/ss.parser";

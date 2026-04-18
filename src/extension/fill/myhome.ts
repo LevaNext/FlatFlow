@@ -227,7 +227,7 @@ function findPropertyTypeChipContainer(): Element | null {
  * Detect statement page language from the location field label or language switcher.
  * Returns "ka" | "en" | "ru" for Georgian, English, or Russian. Defaults to "ka".
  */
-function detectStatementPageLang(): StatementPageLang {
+export function detectStatementPageLang(): StatementPageLang {
   const container = document.querySelector('[data-test-id="input-location"]');
   if (!container) return "ka";
   const label = container.querySelector('.label, label, [class*="label"]');
@@ -424,60 +424,69 @@ function setStreet(address: string): void {
  * Set location: open dropdown, find the li whose first span matches any of location.ka/en/ru, then click that li.
  * Dropdown structure: .select-dropdown ul li, first span = location name (e.g. "თბილისი").
  */
-function setLocation(location: LocationTriple): void {
-  const container = document.querySelector('[data-test-id="input-location"]');
-  if (!container) {
-    LOG("setLocation: container [data-test-id='input-location'] not found");
-    return;
-  }
+function setLocationAsync(location: LocationTriple): Promise<void> {
+  return new Promise((resolve) => {
+    const container = document.querySelector('[data-test-id="input-location"]');
+    if (!container) {
+      LOG("setLocation: container [data-test-id='input-location'] not found");
+      resolve();
+      return;
+    }
 
-  const wantSet = new Set(
-    [location.ka.trim(), location.en.trim(), location.ru.trim()].filter(
-      Boolean,
-    ),
-  );
-  if (wantSet.size === 0) return;
+    const wantSet = new Set(
+      [location.ka.trim(), location.en.trim(), location.ru.trim()].filter(
+        Boolean,
+      ),
+    );
+    if (wantSet.size === 0) {
+      resolve();
+      return;
+    }
 
-  const input = container.querySelector("input");
-  const label = container.querySelector("label");
-  const selectContainer = container.querySelector(".select-container");
-  const trigger = (selectContainer ?? label ?? input) as HTMLElement | null;
-  if (input) input.focus();
-  if (trigger) trigger.click();
+    const input = container.querySelector("input");
+    const label = container.querySelector("label");
+    const selectContainer = container.querySelector(".select-container");
+    const trigger = (selectContainer ?? label ?? input) as HTMLElement | null;
+    if (input) input.focus();
+    if (trigger) trigger.click();
 
-  function findAndClickInSelectDropdown(attempt: number): void {
-    const dropdown = document.querySelector(".select-dropdown");
-    if (!dropdown || !isVisible(dropdown)) {
+    function findAndClickInSelectDropdown(attempt: number): void {
+      const dropdown = document.querySelector(".select-dropdown");
+      if (!dropdown || !isVisible(dropdown)) {
+        if (attempt < 8) {
+          setTimeout(
+            () => findAndClickInSelectDropdown(attempt + 1),
+            100 + attempt * 80,
+          );
+        } else {
+          LOG("setLocation: .select-dropdown not found or not visible");
+          resolve();
+        }
+        return;
+      }
+      const items = dropdown.querySelectorAll("ul li");
+      for (const li of items) {
+        const optionText = getLocationOptionText(li);
+        if (!optionText || !wantSet.has(optionText)) continue;
+        if (!(li instanceof HTMLElement)) continue;
+        li.click();
+        LOG("setLocation: clicked", optionText);
+        resolve();
+        return;
+      }
       if (attempt < 8) {
         setTimeout(
           () => findAndClickInSelectDropdown(attempt + 1),
           100 + attempt * 80,
         );
       } else {
-        LOG("setLocation: .select-dropdown not found or not visible");
+        LOG("setLocation: no option matched", [...wantSet]);
+        resolve();
       }
-      return;
     }
-    const items = dropdown.querySelectorAll("ul li");
-    for (const li of items) {
-      const optionText = getLocationOptionText(li);
-      if (!optionText || !wantSet.has(optionText)) continue;
-      if (!(li instanceof HTMLElement)) continue;
-      li.click();
-      LOG("setLocation: clicked", optionText);
-      return;
-    }
-    if (attempt < 8) {
-      setTimeout(
-        () => findAndClickInSelectDropdown(attempt + 1),
-        100 + attempt * 80,
-      );
-    } else {
-      LOG("setLocation: no option matched", [...wantSet]);
-    }
-  }
 
-  setTimeout(() => findAndClickInSelectDropdown(0), 350);
+    setTimeout(() => findAndClickInSelectDropdown(0), 350);
+  });
 }
 
 /** Label for project type select on the statement form (Georgian). */
@@ -488,75 +497,90 @@ const PROJECT_TYPE_SELECT_LABEL = "აირჩიეთ პროექტი�
  * then find the opened options list (ul.options-list inside luk-absolute dropdown) and click the matching li.
  * Dropdown structure: div.luk-absolute > ul.options-list > li (text directly in li).
  */
-function setProjectType(projectType: string): void {
-  const want = normalizeStatusText(projectType);
-  if (!want) return;
-
-  const candidates = document.querySelectorAll(
-    ".luk-custom-select, [class*='custom-select'], [class*='luk-custom-select']",
-  );
-  let container: Element | null = null;
-  for (const el of candidates) {
-    const label = el.querySelector(".label, label, span[class*='label']");
-    const text = (label?.textContent ?? "").trim();
-    if (
-      text.includes(PROJECT_TYPE_SELECT_LABEL) ||
-      text.includes("პროექტის ტიპი")
-    ) {
-      container = el;
-      break;
+function setProjectTypeAsync(projectType: string): Promise<void> {
+  return new Promise((resolve) => {
+    const want = normalizeStatusText(projectType);
+    if (!want) {
+      resolve();
+      return;
     }
-  }
-  if (!container) {
-    LOG(
-      "setProjectType: container with label",
-      PROJECT_TYPE_SELECT_LABEL,
-      "not found",
+
+    const candidates = document.querySelectorAll(
+      ".luk-custom-select, [class*='custom-select'], [class*='luk-custom-select']",
     );
-    return;
-  }
-
-  const trigger = container.querySelector(
-    "div[class*='cursor-pointer'], .luk-cursor-pointer, div",
-  );
-  const input = container.querySelector("input");
-  if (input) input.focus();
-  if (trigger instanceof HTMLElement) trigger.click();
-
-  function findAndClickOption(attempt: number): void {
-    const lists = document.querySelectorAll("ul.options-list");
-    for (const ul of lists) {
-      if (!isVisible(ul)) continue;
-      const items = ul.querySelectorAll("li");
-      for (const li of items) {
-        const optionText = (li.textContent ?? "").trim();
-        if (
-          (optionText === want || optionText.includes(want)) &&
-          li instanceof HTMLElement
-        ) {
-          li.click();
-          LOG("setProjectType: clicked", optionText);
-          return;
-        }
+    let container: Element | null = null;
+    for (const el of candidates) {
+      const label = el.querySelector(".label, label, span[class*='label']");
+      const text = (label?.textContent ?? "").trim();
+      if (
+        text.includes(PROJECT_TYPE_SELECT_LABEL) ||
+        text.includes("პროექტის ტიპი")
+      ) {
+        container = el;
+        break;
       }
     }
-    if (attempt < 12) {
-      setTimeout(() => findAndClickOption(attempt + 1), 80 + attempt * 50);
-    } else {
+    if (!container) {
       LOG(
-        "setProjectType: ul.options-list not visible or no option matched",
-        want,
+        "setProjectType: container with label",
+        PROJECT_TYPE_SELECT_LABEL,
+        "not found",
       );
+      resolve();
+      return;
     }
-  }
 
-  setTimeout(() => findAndClickOption(0), 350);
+    const trigger = container.querySelector(
+      "div[class*='cursor-pointer'], .luk-cursor-pointer, div",
+    );
+    const input = container.querySelector("input");
+    if (input) input.focus();
+    if (trigger instanceof HTMLElement) trigger.click();
+
+    function findAndClickOption(attempt: number): void {
+      const lists = document.querySelectorAll("ul.options-list");
+      for (const ul of lists) {
+        if (!isVisible(ul)) continue;
+        const items = ul.querySelectorAll("li");
+        for (const li of items) {
+          const optionText = (li.textContent ?? "").trim();
+          if (
+            (optionText === want || optionText.includes(want)) &&
+            li instanceof HTMLElement
+          ) {
+            li.click();
+            LOG("setProjectType: clicked", optionText);
+            resolve();
+            return;
+          }
+        }
+      }
+      if (attempt < 12) {
+        setTimeout(() => findAndClickOption(attempt + 1), 80 + attempt * 50);
+      } else {
+        LOG(
+          "setProjectType: ul.options-list not visible or no option matched",
+          want,
+        );
+        resolve();
+      }
+    }
+
+    setTimeout(() => findAndClickOption(0), 350);
+  });
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
 }
 
 /**
  * Fill the MyHome statement create form: total_price input, GEL/USD toggle, condition, status, location, then photo upload.
+ * Resolves when queued UI work (location/project dropdowns, beds, photo upload) has finished.
  */
-export function fillMyHomeStatementForm(payload: StatementFormPayload): void {
+export async function fillMyHomeStatementForm(
+  payload: StatementFormPayload,
+): Promise<void> {
   const {
     price,
     imageUrls,
@@ -600,12 +624,13 @@ export function fillMyHomeStatementForm(payload: StatementFormPayload): void {
   fillDealType(dealType ?? "");
 
   const location = locationOption ?? getLocationFromTitle(payload.title ?? "");
-  setLocation(location);
+  await setLocationAsync(location);
   LOG("filling location:", location[lang], "lang:", lang);
 
   if (projectType?.trim()) {
-    setTimeout(() => setProjectType(projectType.trim()), 400);
+    await delay(400);
     LOG("filling project type:", projectType);
+    await setProjectTypeAsync(projectType.trim());
   }
 
   if (address?.trim()) {
@@ -624,7 +649,9 @@ export function fillMyHomeStatementForm(payload: StatementFormPayload): void {
     setFloor(floor.trim());
   }
   if (beds != null) {
-    setTimeout(() => setBedroom(beds), 400);
+    await delay(400);
+    setBedroom(beds);
+    await delay(200);
   }
 
   LOG(
@@ -632,107 +659,123 @@ export function fillMyHomeStatementForm(payload: StatementFormPayload): void {
     imageUrls?.length ?? 0,
     imageUrls?.length ? "calling fillMyHomePhotoUpload" : "skipping photos",
   );
-  if (imageUrls?.length) fillMyHomePhotoUpload(imageUrls);
+  if (imageUrls?.length) {
+    await fillMyHomePhotoUpload(imageUrls);
+  }
 }
 
 /**
  * Fetch images via background, build File list, and dispatch to the statement form photo upload (input + drag/drop).
  */
-export function fillMyHomePhotoUpload(imageUrls: string[]): void {
-  LOG(
-    "fillMyHomePhotoUpload called, imageUrls count:",
-    imageUrls.length,
-    "urls:",
-    imageUrls.slice(0, 3),
-  );
-  if (
-    !imageUrls.length ||
-    typeof chrome === "undefined" ||
-    !chrome.runtime?.sendMessage
-  ) {
+export function fillMyHomePhotoUpload(imageUrls: string[]): Promise<void> {
+  return new Promise((resolve) => {
     LOG(
-      "fillMyHomePhotoUpload skipped: no urls or no chrome.runtime.sendMessage",
+      "fillMyHomePhotoUpload called, imageUrls count:",
+      imageUrls.length,
+      "urls:",
+      imageUrls.slice(0, 3),
     );
-    return;
-  }
-  const urlsToFetch = imageUrls.slice(0, 16);
-  LOG("sending MESSAGE_FETCH_IMAGES to background, urls:", urlsToFetch.length);
-  chrome.runtime.sendMessage(
-    { type: MESSAGE_FETCH_IMAGES, urls: urlsToFetch },
-    (response: string[] | { error?: string }) => {
-      if (chrome.runtime.lastError) {
-        LOG("sendMessage error:", chrome.runtime.lastError.message);
-        return;
-      }
+    if (
+      !imageUrls.length ||
+      typeof chrome === "undefined" ||
+      !chrome.runtime?.sendMessage
+    ) {
       LOG(
-        "fillMyHomePhotoUpload response:",
-        Array.isArray(response) ? `array length ${response.length}` : response,
+        "fillMyHomePhotoUpload skipped: no urls or no chrome.runtime.sendMessage",
       );
-      if (!Array.isArray(response) || response.length === 0) {
+      resolve();
+      return;
+    }
+    const urlsToFetch = imageUrls.slice(0, 16);
+    LOG(
+      "sending MESSAGE_FETCH_IMAGES to background, urls:",
+      urlsToFetch.length,
+    );
+    chrome.runtime.sendMessage(
+      { type: MESSAGE_FETCH_IMAGES, urls: urlsToFetch },
+      (response: string[] | { error?: string }) => {
+        if (chrome.runtime.lastError) {
+          LOG("sendMessage error:", chrome.runtime.lastError.message);
+          resolve();
+          return;
+        }
         LOG(
-          "fillMyHomePhotoUpload: no files to add (response not array or empty). If object:",
-          response,
+          "fillMyHomePhotoUpload response:",
+          Array.isArray(response)
+            ? `array length ${response.length}`
+            : response,
         );
-        return;
-      }
-      const files = response.map((dataUrl, i) => dataUrlToFile(dataUrl, i));
-      const container = document.querySelector(
-        '[data-test-id="input-photo-upload"]',
-      );
-      const dropZone = container?.querySelector(".drag-drop");
-      const label = container?.querySelector(".pre-uploader, [for]");
-      const fileInput = container?.querySelector(
-        'input[type="file"]',
-      ) as HTMLInputElement | null;
-      LOG(
-        "drop zone:",
-        !!dropZone,
-        "label:",
-        !!label,
-        "file input:",
-        !!fileInput,
-      );
-      const targets = [dropZone, label, fileInput, container].filter(
-        Boolean,
-      ) as Element[];
-      if (targets.length === 0) {
-        LOG("no photo upload targets found");
-        return;
-      }
-      const dispatchDrop = () => {
-        const d = new DataTransfer();
-        for (const f of files) d.items.add(f);
-        if (fileInput && d.files.length > 0) {
-          try {
-            fileInput.files = d.files;
-            fileInput.dispatchEvent(new Event("input", { bubbles: true }));
-            fileInput.dispatchEvent(new Event("change", { bubbles: true }));
-            LOG(
-              "set file input.files and dispatched input+change, count:",
-              d.files.length,
-            );
-          } catch (e) {
-            LOG(
-              "fileInput.files assign failed, trying drop:",
-              (e as Error)?.message,
-            );
+        if (!Array.isArray(response) || response.length === 0) {
+          LOG(
+            "fillMyHomePhotoUpload: no files to add (response not array or empty). If object:",
+            response,
+          );
+          resolve();
+          return;
+        }
+        const files = response.map((dataUrl, i) => dataUrlToFile(dataUrl, i));
+        const container = document.querySelector(
+          '[data-test-id="input-photo-upload"]',
+        );
+        const dropZone = container?.querySelector(".drag-drop");
+        const label = container?.querySelector(".pre-uploader, [for]");
+        const fileInput = container?.querySelector(
+          'input[type="file"]',
+        ) as HTMLInputElement | null;
+        LOG(
+          "drop zone:",
+          !!dropZone,
+          "label:",
+          !!label,
+          "file input:",
+          !!fileInput,
+        );
+        const targets = [dropZone, label, fileInput, container].filter(
+          Boolean,
+        ) as Element[];
+        if (targets.length === 0) {
+          LOG("no photo upload targets found");
+          resolve();
+          return;
+        }
+        const dispatchDrop = () => {
+          const d = new DataTransfer();
+          for (const f of files) d.items.add(f);
+          if (fileInput && d.files.length > 0) {
+            try {
+              fileInput.files = d.files;
+              fileInput.dispatchEvent(new Event("input", { bubbles: true }));
+              fileInput.dispatchEvent(new Event("change", { bubbles: true }));
+              LOG(
+                "set file input.files and dispatched input+change, count:",
+                d.files.length,
+              );
+            } catch (e) {
+              LOG(
+                "fileInput.files assign failed, trying drop:",
+                (e as Error)?.message,
+              );
+            }
           }
-        }
-        const opts = { bubbles: true, cancelable: true, dataTransfer: d };
-        for (const target of targets) {
-          target.dispatchEvent(new DragEvent("dragenter", opts));
-          target.dispatchEvent(new DragEvent("dragover", opts));
-          target.dispatchEvent(new DragEvent("drop", opts));
-        }
-        LOG(
-          "dispatched dragenter+dragover+drop on",
-          targets.length,
-          "targets with",
-          files.length,
-          "files",
-        );
-      };
-      setTimeout(dispatchDrop, 300);
-    },
-  );
+          const opts = { bubbles: true, cancelable: true, dataTransfer: d };
+          for (const target of targets) {
+            target.dispatchEvent(new DragEvent("dragenter", opts));
+            target.dispatchEvent(new DragEvent("dragover", opts));
+            target.dispatchEvent(new DragEvent("drop", opts));
+          }
+          LOG(
+            "dispatched dragenter+dragover+drop on",
+            targets.length,
+            "targets with",
+            files.length,
+            "files",
+          );
+        };
+        setTimeout(() => {
+          dispatchDrop();
+          setTimeout(resolve, 150);
+        }, 300);
+      },
+    );
+  });
 }

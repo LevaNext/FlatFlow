@@ -4,18 +4,34 @@
  * - Statement create page: reads stored listing and delegates to site-specific fill (myhome / ss).
  */
 
-import { fillMyHomeStatementForm } from "@/extension/fill/myhome";
+import {
+  detectStatementPageLang,
+  fillMyHomeStatementForm,
+} from "@/extension/fill/myhome";
 import { fillSsStatementForm } from "@/extension/fill/ss";
 import type { StatementFormPayload } from "@/extension/fill/types";
 import { LISTING_READY_SELECTORS } from "@/extension/listingReadySelectors";
 import { MESSAGE_PARSE_LISTING } from "@/extension/messages";
+import { createParseListingProgressOverlay } from "@/extension/parseListingProgressOverlay";
+import { createStatementFillOverlay } from "@/extension/statementFillOverlay";
 import { waitForPageReady } from "@/extension/waitForPageReady";
-import { detectSite, parseListing, type SiteId } from "@/parsing";
+import {
+  detectSite,
+  parseMyHomeListingTabResultPhased,
+  type SiteId,
+} from "@/parsing";
+import {
+  getPageLang,
+  type PageLang,
+} from "@/parsing/myhome/selectors/getPageLang";
 import { MYHOME_GE, SS_GE } from "@/shared/constants";
 import { PARSED_LISTING_STORAGE_KEY } from "@/storage/parsedListingStorage";
 
 const LOG = (msg: string, ...args: unknown[]) =>
   console.log("[FlatFlow]", msg, ...args);
+
+/** One listing parse at a time so overlapping messages cannot stack multiple overlays (darker scrim). */
+let myhomeListingParseQueue: Promise<void> = Promise.resolve();
 
 function isStatementCreatePage(): boolean {
   try {
@@ -79,7 +95,10 @@ function runFillFromStorage(): void {
       );
       const data = payload?.data ?? {};
       if (site === "myhome") {
-        fillMyHomeStatementForm(data);
+        const overlayLang: PageLang = data.lang ?? detectStatementPageLang();
+        const overlay = createStatementFillOverlay(document, overlayLang);
+        overlay.show();
+        void fillMyHomeStatementForm(data).finally(() => overlay.hide());
       } else {
         fillSsStatementForm(data);
       }
@@ -132,18 +151,49 @@ if (isStatementCreatePage()) {
       }
 
       const selectors = LISTING_READY_SELECTORS[site] ?? [];
-      void waitForPageReady(document, {
-        selectors,
-        debounceMs: 900,
-        timeoutMs: 30_000,
-      }).then(() => {
-        const { listing, errors } = parseListing("myhome", document);
-        sendResponse({
-          listing,
-          errors,
-          ...(listing ? {} : { error: "Failed to parse listing" }),
+
+      myhomeListingParseQueue = myhomeListingParseQueue
+        .catch(() => {})
+        .then(async () => {
+          const overlay = createParseListingProgressOverlay(
+            document,
+            getPageLang(document),
+          );
+          overlay.mount();
+          try {
+            await waitForPageReady(document, {
+              selectors,
+              mode: "allMatchedSettle",
+              settleMs: 320,
+              timeoutMs: 30_000,
+              omitOverlay: true,
+            });
+            const { listing, errors } = await parseMyHomeListingTabResultPhased(
+              document,
+              {
+                beforePhase: async (phase) => {
+                  overlay.setStep(phase);
+                },
+                settleMs: 120,
+              },
+            );
+            overlay.markAllComplete();
+            await new Promise((r) => setTimeout(r, 200));
+            sendResponse({
+              listing,
+              errors,
+              ...(listing ? {} : { error: "Failed to parse listing" }),
+            });
+          } catch {
+            sendResponse({
+              listing: null,
+              errors: [],
+              error: "Failed to parse listing",
+            });
+          } finally {
+            overlay.destroy();
+          }
         });
-      });
       return true;
     },
   );

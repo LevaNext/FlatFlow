@@ -1,11 +1,12 @@
 /**
- * Layout footer: language selector (ka, en).
+ * Layout footer: KISA donation (same QR as website), then language selector (ka, en).
  */
 
 import Flag from "react-world-flags";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { Language } from "@/i18n";
 import { useTranslation } from "@/i18n";
+import { SidePanelDonation } from "./SidePanelDonation";
 
 const LANGUAGE_FLAG_CODE: Record<Language, string> = {
   ka: "ge",
@@ -24,7 +25,8 @@ export function LayoutFooter({
   const { t } = useTranslation();
 
   return (
-    <footer className="flex shrink-0 w-full border-t border-border px-3 py-2">
+    <footer className="flex shrink-0 w-full flex-col gap-2 border-t border-border px-3 py-2">
+      <SidePanelDonation />
       <ToggleGroup
         type="single"
         value={language}
