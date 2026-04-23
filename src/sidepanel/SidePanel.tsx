@@ -15,7 +15,7 @@ import {
 import type { ListingData } from "@/types/listing";
 import type { ParserError } from "@/types/parser";
 import "../index.css";
-import { MYHOME_GE } from "@/shared/constants";
+import { MYHOME_GE, SS_GE } from "@/shared/constants";
 import { type Language, Layout, type Theme } from "./components/Layout";
 import { ListingPreview } from "./components/ListingPreview";
 import { LoadingLogo } from "./components/LoadingLogo";
@@ -283,6 +283,15 @@ function SidePanel(): React.ReactElement {
     chrome.tabs.create({ url: MYHOME_GE.statementUrl });
   }, []);
 
+  const handleUploadSs = useCallback(() => {
+    if (typeof chrome === "undefined" || !chrome.tabs) return;
+    setListing(null);
+    setParsingErrors([]);
+    setSiteId(null);
+    setError(null);
+    chrome.tabs.create({ url: SS_GE.statementUrl });
+  }, []);
+
   const renderCurrentPageContent = (): React.ReactElement => {
     if (loading) {
       return <LoadingLogo />;
@@ -291,18 +300,21 @@ function SidePanel(): React.ReactElement {
       return (
         <>
           <UnsupportedMessage />
-          <UploadButtons siteId={siteId} onMyHomeClick={handleUploadMyHome} />
+          <UploadButtons
+            siteId={siteId}
+            onMyHomeClick={handleUploadMyHome}
+            onSsClick={handleUploadSs}
+          />
         </>
       );
     }
     if (siteId === "ss") {
       return (
-        <>
-          <p className="text-sm text-muted-foreground">
-            {tForLang("status.ssComingSoon")}
-          </p>
-          <UploadButtons siteId={siteId} onMyHomeClick={handleUploadMyHome} />
-        </>
+        <UploadButtons
+          siteId={siteId}
+          onMyHomeClick={handleUploadMyHome}
+          onSsClick={handleUploadSs}
+        />
       );
     }
     if (siteId === "myhome") {
@@ -310,7 +322,11 @@ function SidePanel(): React.ReactElement {
         return (
           <>
             <p className="text-sm text-destructive">{error}</p>
-            <UploadButtons siteId={siteId} onMyHomeClick={handleUploadMyHome} />
+            <UploadButtons
+              siteId={siteId}
+              onMyHomeClick={handleUploadMyHome}
+              onSsClick={handleUploadSs}
+            />
           </>
         );
       }
@@ -324,13 +340,23 @@ function SidePanel(): React.ReactElement {
             {parsingErrors.length > 0 && (
               <ParsingErrors errors={parsingErrors} />
             )}
-            <UploadButtons siteId={siteId} onMyHomeClick={handleUploadMyHome} />
+            <UploadButtons
+              siteId={siteId}
+              onMyHomeClick={handleUploadMyHome}
+              onSsClick={handleUploadSs}
+            />
           </>
         );
       }
       return <LoadingLogo />;
     }
-    return <UploadButtons siteId={siteId} onMyHomeClick={handleUploadMyHome} />;
+    return (
+      <UploadButtons
+        siteId={siteId}
+        onMyHomeClick={handleUploadMyHome}
+        onSsClick={handleUploadSs}
+      />
+    );
   };
 
   // Unsupported domain → full-page only, no header/footer

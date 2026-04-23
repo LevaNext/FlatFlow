@@ -31,6 +31,7 @@
   "optional_host_permissions": [
     "https://www.ss.ge/*",
     "https://ss.ge/*",
+    "https://home.ss.ge/*",
     "https://statements.myhome.ge/*"
   ],
   "content_scripts": [
@@ -39,6 +40,7 @@
         "https://www.myhome.ge/*",
         "https://www.ss.ge/*",
         "https://ss.ge/*",
+        "https://home.ss.ge/*",
         "https://statements.myhome.ge/*"
       ],
       "js": ["content.js"],

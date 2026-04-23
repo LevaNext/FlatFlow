@@ -30,16 +30,27 @@ import { PARSED_LISTING_STORAGE_KEY } from "@/storage/parsedListingStorage";
 const LOG = (msg: string, ...args: unknown[]) =>
   console.log("[FlatFlow]", msg, ...args);
 
+LOG("content script loaded on", globalThis.location.href);
+
 /** One listing parse at a time so overlapping messages cannot stack multiple overlays (darker scrim). */
 let myhomeListingParseQueue: Promise<void> = Promise.resolve();
 
 function isStatementCreatePage(): boolean {
   try {
-    const u = new URL(window.location.href);
-    return (
+    const u = new URL(globalThis.location.href);
+    if (
       u.hostname === MYHOME_GE.statementHost &&
       u.pathname.includes("/statement/create")
-    );
+    ) {
+      return true;
+    }
+    if (
+      u.hostname === SS_GE.statementHost &&
+      u.pathname.includes("/udzravi-qoneba/create")
+    ) {
+      return true;
+    }
+    return false;
   } catch {
     return false;
   }
@@ -50,7 +61,8 @@ function isStatementCreatePage(): boolean {
  */
 function getStatementPageSite(): "myhome" | "ss" | null {
   try {
-    const host = new URL(window.location.href).hostname.toLowerCase();
+    const host = new URL(globalThis.location.href).hostname.toLowerCase();
+    console.log("getStatementPageSite", host);
     if (host === MYHOME_GE.statementHost) return "myhome";
     if (host === SS_GE.statementHost) return "ss";
     return null;
@@ -100,7 +112,10 @@ function runFillFromStorage(): void {
         overlay.show();
         void fillMyHomeStatementForm(data).finally(() => overlay.hide());
       } else {
-        fillSsStatementForm(data);
+        const overlayLang: PageLang = data.lang ?? "ka";
+        const overlay = createStatementFillOverlay(document, overlayLang);
+        overlay.show();
+        void fillSsStatementForm(data).finally(() => overlay.hide());
       }
     },
   );
@@ -130,7 +145,7 @@ if (isStatementCreatePage()) {
     ) => {
       if (message.type !== MESSAGE_PARSE_LISTING) return;
 
-      const site: SiteId = detectSite(window.location.href);
+      const site: SiteId = detectSite(globalThis.location.href);
 
       if (site === "unsupported") {
         sendResponse({

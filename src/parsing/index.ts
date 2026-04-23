@@ -6,9 +6,9 @@
 import type { ListingData, ListingSource } from "@/types/listing";
 import type { ParserError, ParserOutput } from "@/types/parser";
 import {
+  type MyHomeParseProgressPhase,
   parseMyHomeListing,
   parseMyHomeListingPhased,
-  type MyHomeParseProgressPhase,
 } from "./myhome/myhome.parser";
 import { parseSsListing } from "./ss/ss.parser";
 
@@ -105,5 +105,8 @@ export async function parseMyHomeListingTabResultPhased(
 
 export { detectSite } from "./detectors/siteDetector";
 export type { MyHomeParseProgressPhase } from "./myhome/myhome.parser";
-export { parseMyHomeListing, parseMyHomeListingPhased } from "./myhome/myhome.parser";
+export {
+  parseMyHomeListing,
+  parseMyHomeListingPhased,
+} from "./myhome/myhome.parser";
 export { parseSsListing } from "./ss/ss.parser";

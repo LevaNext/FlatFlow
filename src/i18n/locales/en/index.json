@@ -16,7 +16,8 @@
     "shortEn": "EN"
   },
   "upload": {
-    "myHome": "Upload to MyHome"
+    "myHome": "Upload to MyHome",
+    "ss": "Upload to SS.ge"
   },
   "status": {
     "parsing": "Parsing listing…",
