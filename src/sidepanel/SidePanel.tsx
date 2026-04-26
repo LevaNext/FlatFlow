@@ -3,13 +3,17 @@ import {
   MESSAGE_CLOSE_SIDE_PANEL,
   MESSAGE_PANEL_CLOSED,
   MESSAGE_PARSE_LISTING,
+  STORAGE_KEY_ACTIVE_FILL_LISTING_ID,
+  STORAGE_KEY_STATEMENT_FILL_ACTIVE,
 } from "@/extension/messages";
 import { useActiveTabDomain } from "@/hooks/useActiveTabDomain";
 import { type TranslationKey, TranslationProvider, t } from "@/i18n";
 import { detectSite, type SiteId } from "@/parsing";
 import {
+  clearParsedListing,
   getParsedListing,
   normalizeListingPageUrl,
+  type ParsedListingPayload,
   saveParsedListing,
 } from "@/storage/parsedListingStorage";
 import type { ListingData } from "@/types/listing";
@@ -28,6 +32,18 @@ import { UploadButtons } from "./components/UploadButtons";
 
 const STORAGE_KEY_SIDE_PANEL_OPEN = "sidePanelOpen";
 
+interface ParseRequestContext {
+  requestId: string;
+  pageUrl: string;
+}
+
+function createRequestId(): string {
+  return (
+    globalThis.crypto?.randomUUID?.() ??
+    `parse-${Date.now()}-${Math.random().toString(36).slice(2)}`
+  );
+}
+
 function SidePanel(): React.ReactElement {
   const {
     isSupported,
@@ -44,8 +60,8 @@ function SidePanel(): React.ReactElement {
   const [parsingErrors, setParsingErrors] = useState<ParserError[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  /** Tab URL of the last parse request (used when saving `pageUrl` to storage). */
-  const lastParseTabUrlRef = useRef<string | null>(null);
+  const activeParseRequestRef = useRef<ParseRequestContext | null>(null);
+  const activeParsedPayloadRef = useRef<ParsedListingPayload | null>(null);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -67,7 +83,13 @@ function SidePanel(): React.ReactElement {
     };
 
     const onPageHide = () => {
-      void chrome.storage.session.set({ [STORAGE_KEY_SIDE_PANEL_OPEN]: false });
+      void chrome.storage.session.set({
+        [STORAGE_KEY_SIDE_PANEL_OPEN]: false,
+      });
+      void chrome.storage.local.set({
+        [STORAGE_KEY_STATEMENT_FILL_ACTIVE]: false,
+      });
+      void chrome.storage.local.remove(STORAGE_KEY_ACTIVE_FILL_LISTING_ID);
       chrome.runtime
         .sendMessage({ type: MESSAGE_PANEL_CLOSED })
         .catch(() => {});
@@ -79,7 +101,13 @@ function SidePanel(): React.ReactElement {
     return () => {
       chrome.runtime.onMessage.removeListener(onMessage);
       window.removeEventListener("pagehide", onPageHide);
-      void chrome.storage.session.set({ [STORAGE_KEY_SIDE_PANEL_OPEN]: false });
+      void chrome.storage.session.set({
+        [STORAGE_KEY_SIDE_PANEL_OPEN]: false,
+      });
+      void chrome.storage.local.set({
+        [STORAGE_KEY_STATEMENT_FILL_ACTIVE]: false,
+      });
+      void chrome.storage.local.remove(STORAGE_KEY_ACTIVE_FILL_LISTING_ID);
     };
   }, []);
 
@@ -99,34 +127,55 @@ function SidePanel(): React.ReactElement {
   const onListingSaved = useCallback(() => {}, []);
 
   const handleParseResponse = useCallback(
-    (response: ParseMessageResponse) => {
+    (response: ParseMessageResponse, context: ParseRequestContext) => {
+      const activeRequest = activeParseRequestRef.current;
+      if (
+        activeRequest?.requestId !== context.requestId ||
+        activeRequest.pageUrl !== context.pageUrl
+      ) {
+        console.debug("[FlatFlow] ignoring stale parse response", {
+          responseRequestId: context.requestId,
+          activeRequestId: activeRequest?.requestId,
+          responsePageUrl: context.pageUrl,
+          activePageUrl: activeRequest?.pageUrl,
+        });
+        return;
+      }
+
       setLoading(false);
       const errs = response?.errors ?? [];
       setParsingErrors(errs);
       if (response?.listing) {
-        setListing(response.listing);
+        const listing = response.listing;
+        if (!listing.listingId) {
+          setError(tForLang("errors.failedParse"));
+          return;
+        }
+
+        setListing(listing);
         setError(null);
-        if (
-          response.listing.propertyType != null ||
-          response.listing.dealType != null
-        ) {
+        if (listing.propertyType != null || listing.dealType != null) {
           console.debug(
             "[FlatFlow] saving listing with propertyType:",
-            response.listing.propertyType,
+            listing.propertyType,
             "dealType:",
-            response.listing.dealType,
+            listing.dealType,
+            "listingId:",
+            listing.listingId,
           );
         }
-        const rawUrl = lastParseTabUrlRef.current;
-        saveParsedListing({
-          data: response.listing,
+        const payload: ParsedListingPayload = {
+          data: listing,
           errors: errs,
           meta: {
-            source: response.listing.source,
+            listingId: listing.listingId,
+            source: listing.source,
             parsedAt: Date.now(),
-            ...(rawUrl ? { pageUrl: normalizeListingPageUrl(rawUrl) } : {}),
+            pageUrl: normalizeListingPageUrl(context.pageUrl),
           },
-        }).then(onListingSaved);
+        };
+        activeParsedPayloadRef.current = payload;
+        saveParsedListing(payload).then(onListingSaved);
       } else {
         setError(response?.error ?? tForLang("errors.failedParse"));
       }
@@ -151,6 +200,7 @@ function SidePanel(): React.ReactElement {
       response: { listing?: ListingData; error?: string } | undefined,
       tabId: number,
       retried: boolean,
+      context: ParseRequestContext,
       retry: () => void,
     ) => {
       if (chrome.runtime.lastError) {
@@ -165,13 +215,18 @@ function SidePanel(): React.ReactElement {
         setError(tForLang("errors.refreshPage"));
         return;
       }
-      handleParseResponse(response);
+      handleParseResponse(response, context);
     },
     [handleParseResponse, onScriptInjected, tForLang],
   );
 
   const makeParseMessageHandler = useCallback(
-    (tabId: number, retried: boolean, retry: () => void) =>
+    (
+      tabId: number,
+      retried: boolean,
+      context: ParseRequestContext,
+      retry: () => void,
+    ) =>
       (
         response:
           | {
@@ -180,18 +235,18 @@ function SidePanel(): React.ReactElement {
             }
           | undefined,
       ) => {
-        onParseMessageReceived(response, tabId, retried, retry);
+        onParseMessageReceived(response, tabId, retried, context, retry);
       },
     [onParseMessageReceived],
   );
 
   const trySendParseMessage = useCallback(
-    (tabId: number, retried: boolean) => {
-      const retry = () => trySendParseMessage(tabId, true);
+    (tabId: number, retried: boolean, context: ParseRequestContext) => {
+      const retry = () => trySendParseMessage(tabId, true, context);
       chrome.tabs.sendMessage(
         tabId,
-        { type: MESSAGE_PARSE_LISTING },
-        makeParseMessageHandler(tabId, retried, retry),
+        { type: MESSAGE_PARSE_LISTING, requestId: context.requestId },
+        makeParseMessageHandler(tabId, retried, context, retry),
       );
     },
     [makeParseMessageHandler],
@@ -203,6 +258,8 @@ function SidePanel(): React.ReactElement {
     setParsingErrors([]);
     setSiteId(null);
     setLoading(true);
+    activeParseRequestRef.current = null;
+    activeParsedPayloadRef.current = null;
 
     if (typeof chrome === "undefined" || !chrome.tabs) {
       setError(tForLang("errors.extensionContext"));
@@ -224,12 +281,14 @@ function SidePanel(): React.ReactElement {
         setSiteId(detected);
 
         if (detected === "unsupported") {
+          void clearParsedListing();
           setError(tForLang("errors.unsupportedSite"));
           setLoading(false);
           return;
         }
 
         if (detected === "ss") {
+          void clearParsedListing();
           setError(null);
           setLoading(false);
           return;
@@ -241,8 +300,9 @@ function SidePanel(): React.ReactElement {
           return;
         }
 
-        lastParseTabUrlRef.current = tab.url ?? null;
-        trySendParseMessage(tab.id, false);
+        const context = { requestId: createRequestId(), pageUrl: tab.url };
+        activeParseRequestRef.current = context;
+        trySendParseMessage(tab.id, false, context);
       },
     );
   }, [trySendParseMessage, tForLang]);
@@ -252,11 +312,19 @@ function SidePanel(): React.ReactElement {
     if (!isListingDetailPage || tabUrl == null) return;
 
     const normalized = normalizeListingPageUrl(tabUrl);
+    setListing(null);
+    setParsingErrors([]);
+    setError(null);
+    setSiteId(null);
+    setLoading(true);
+    activeParseRequestRef.current = null;
+    activeParsedPayloadRef.current = null;
 
     void (async () => {
       const stored = await getParsedListing();
       if (
         stored.ok &&
+        stored.value.data.listingId === stored.value.meta.listingId &&
         stored.value.meta.pageUrl != null &&
         normalizeListingPageUrl(stored.value.meta.pageUrl) === normalized
       ) {
@@ -265,6 +333,7 @@ function SidePanel(): React.ReactElement {
         setSiteId(stored.value.meta.source);
         setError(null);
         setLoading(false);
+        activeParsedPayloadRef.current = stored.value;
         return;
       }
 
@@ -272,25 +341,66 @@ function SidePanel(): React.ReactElement {
     })();
   }, [isListingDetailPage, tabUrl, requestListingFromCurrentTab]);
 
+  useEffect(() => {
+    if (isLoading || isListingDetailPage) return;
+    setListing(null);
+    setParsingErrors([]);
+    setError(null);
+    activeParseRequestRef.current = null;
+    activeParsedPayloadRef.current = null;
+  }, [isLoading, isListingDetailPage]);
+
+  const openStatementPage = useCallback(
+    (url: string) => {
+      if (typeof chrome === "undefined" || !chrome.tabs) return;
+      const payload = activeParsedPayloadRef.current;
+      const currentListing = listing;
+      const currentListingId = currentListing?.listingId;
+      if (
+        payload != null &&
+        currentListingId != null &&
+        payload.data.listingId === currentListingId
+      ) {
+        console.debug("[FlatFlow] opening statement for listing", {
+          listingId: currentListingId,
+          imageCount: currentListing?.imageUrls?.length ?? 0,
+        });
+        void saveParsedListing(payload);
+        void chrome.storage.local.set({
+          [STORAGE_KEY_STATEMENT_FILL_ACTIVE]: true,
+          [STORAGE_KEY_ACTIVE_FILL_LISTING_ID]: currentListingId,
+        });
+      } else {
+        console.debug("[FlatFlow] opening blank statement; no active listing");
+        void clearParsedListing();
+        void chrome.storage.local.set({
+          [STORAGE_KEY_STATEMENT_FILL_ACTIVE]: false,
+        });
+        void chrome.storage.local.remove(STORAGE_KEY_ACTIVE_FILL_LISTING_ID);
+      }
+
+      setListing(null);
+      setParsingErrors([]);
+      setSiteId(null);
+      setError(null);
+      activeParseRequestRef.current = null;
+      activeParsedPayloadRef.current = null;
+      chrome.tabs.create({ url });
+    },
+    [listing],
+  );
+
   const handleUploadMyHome = useCallback(() => {
     if (typeof chrome === "undefined" || !chrome.tabs) return;
     // Keep parsed listing in storage so the statement page content script can read it and fill price + photos.
     // Do not clear here; the statement page reads from storage on load.
-    setListing(null);
-    setParsingErrors([]);
-    setSiteId(null);
-    setError(null);
-    chrome.tabs.create({ url: MYHOME_GE.statementUrl });
-  }, []);
+    openStatementPage(MYHOME_GE.statementUrl);
+  }, [openStatementPage]);
 
   const handleUploadSs = useCallback(() => {
     if (typeof chrome === "undefined" || !chrome.tabs) return;
-    setListing(null);
-    setParsingErrors([]);
-    setSiteId(null);
-    setError(null);
-    chrome.tabs.create({ url: SS_GE.statementUrl });
-  }, []);
+    openStatementPage(SS_GE.statementUrl);
+  }, [openStatementPage]);
 
   const renderCurrentPageContent = (): React.ReactElement => {
     if (loading) {

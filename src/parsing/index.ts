@@ -21,17 +21,29 @@ export interface ParseListingResult {
 
 const MYHOME_SOURCE: ListingData["source"] = "myhome";
 
+function createListingId(): string {
+  return (
+    globalThis.crypto?.randomUUID?.() ??
+    `listing-${Date.now()}-${Math.random().toString(36).slice(2)}`
+  );
+}
+
 function buildListingFromMyHomeData(
   data: ParserOutput<ListingData>["data"],
 ): ListingData {
   const optional = (key: keyof ListingData, value: unknown) =>
     value === undefined ? {} : { [key]: value };
   return {
+    listingId: createListingId(),
     source: MYHOME_SOURCE,
     ...optional("title", data.title),
+    ...optional("description", data.description),
     ...optional("price", data.price),
     ...optional("imageUrl", data.imageUrl),
     ...optional("imageUrls", data.imageUrls),
+    ...optional("id", data.id),
+    ...optional("views", data.views),
+    ...optional("listedAt", data.listedAt),
     ...optional("status", data.status),
     ...optional("condition", data.condition),
     ...optional("projectType", data.projectType),

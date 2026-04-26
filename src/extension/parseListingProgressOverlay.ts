@@ -30,6 +30,7 @@ const COPY: Record<PageLang, StepCopy> = {
     images: "ფოტოები…",
     price: "ფასი…",
     address: "მისამართი…",
+    description: "აღწერა…",
     listingMeta: "ID და სტატისტიკა…",
     listingAttributes: "ფართი, ოთახები…",
     status: "სტატუსი…",
@@ -44,6 +45,7 @@ const COPY: Record<PageLang, StepCopy> = {
     images: "Photos…",
     price: "Price…",
     address: "Address…",
+    description: "Description…",
     listingMeta: "ID & stats…",
     listingAttributes: "Area & rooms…",
     status: "Status…",
@@ -58,6 +60,7 @@ const COPY: Record<PageLang, StepCopy> = {
     images: "Фотографии…",
     price: "Цена…",
     address: "Адрес…",
+    description: "Описание…",
     listingMeta: "ID и статистика…",
     listingAttributes: "Площадь и комнаты…",
     status: "Статус…",
@@ -302,6 +305,26 @@ export function createParseListingProgressOverlay(
     if (card) card.classList.add("flatflow-parse-card--success");
   }
 
+  type StepState = "pending" | "active" | "done";
+
+  function stepStateForIndex(index: number, activeIndex: number): StepState {
+    if (index < activeIndex) return "done";
+    return index === activeIndex ? "active" : "pending";
+  }
+
+  function iconTextForState(state: StepState): string {
+    if (state === "done") return "✓";
+    if (state === "pending") return "•";
+    return "";
+  }
+
+  function applyStepState(li: HTMLLIElement, state: StepState): void {
+    const icon = li.querySelector(".flatflow-parse-step-icon");
+    li.classList.remove("pending", "active", "done");
+    li.classList.add(state);
+    if (icon) icon.textContent = iconTextForState(state);
+  }
+
   function applyStep(phase: ParseOverlayPhase): void {
     const idx = PHASE_ORDER.indexOf(phase);
     if (idx < 0) return;
@@ -309,18 +332,7 @@ export function createParseListingProgressOverlay(
       const p = PHASE_ORDER[i];
       const li = stepEls.get(p);
       if (!li) continue;
-      const icon = li.querySelector(".flatflow-parse-step-icon");
-      li.classList.remove("pending", "active", "done");
-      if (i < idx) {
-        li.classList.add("done");
-        if (icon) icon.textContent = "✓";
-      } else if (i === idx) {
-        li.classList.add("active");
-        if (icon) icon.textContent = "";
-      } else {
-        li.classList.add("pending");
-        if (icon) icon.textContent = "•";
-      }
+      applyStepState(li, stepStateForIndex(i, idx));
     }
     const card = wrap?.querySelector(".flatflow-parse-card");
     if (card) card.classList.remove("flatflow-parse-card--success");

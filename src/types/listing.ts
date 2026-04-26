@@ -11,7 +11,11 @@ export interface ListingPrice {
 }
 
 export interface ListingData {
+  /** Internal FlatFlow listing identifier. Generated for every parse and used to scope storage/uploads. */
+  listingId: string;
   title?: string;
+  /** Public listing description text. Used to prefill statement form description. */
+  description?: string;
   price?: ListingPrice;
   imageUrl?: string;
   /** All gallery image URLs (full-size). Used for statement form photo upload. */

@@ -9,6 +9,8 @@ import {
   MESSAGE_CLOSE_SIDE_PANEL,
   MESSAGE_FETCH_IMAGES,
   MESSAGE_PANEL_CLOSED,
+  STORAGE_KEY_ACTIVE_FILL_LISTING_ID,
+  STORAGE_KEY_STATEMENT_FILL_ACTIVE,
 } from "./messages";
 
 const STORAGE_KEY_SIDE_PANEL_OPEN = "sidePanelOpen";
@@ -73,6 +75,10 @@ chrome.action.onClicked.addListener((tab) => {
         void chrome.storage.session.set({
           [STORAGE_KEY_SIDE_PANEL_OPEN]: false,
         });
+        void chrome.storage.local.set({
+          [STORAGE_KEY_STATEMENT_FILL_ACTIVE]: false,
+        });
+        void chrome.storage.local.remove(STORAGE_KEY_ACTIVE_FILL_LISTING_ID);
       } else if (tabId !== undefined) {
         console.log("[FlatFlow] panel opened");
         chrome.sidePanel.open({ tabId });
@@ -99,17 +105,27 @@ function blobToDataUrl(blob: Blob): Promise<string> {
 
 chrome.runtime.onMessage.addListener(
   (
-    message: { type: string; urls?: string[] },
+    message: { type: string; urls?: string[]; listingId?: string },
     _sender: chrome.runtime.MessageSender,
     sendResponse: (response: string[] | { error: string }) => void,
   ) => {
     if (message.type === MESSAGE_PANEL_CLOSED) {
-      void chrome.storage.session.set({ [STORAGE_KEY_SIDE_PANEL_OPEN]: false });
+      void chrome.storage.session.set({
+        [STORAGE_KEY_SIDE_PANEL_OPEN]: false,
+      });
+      void chrome.storage.local.set({
+        [STORAGE_KEY_STATEMENT_FILL_ACTIVE]: false,
+      });
+      void chrome.storage.local.remove(STORAGE_KEY_ACTIVE_FILL_LISTING_ID);
       return false;
     }
     if (message.type !== MESSAGE_FETCH_IMAGES || !Array.isArray(message.urls))
       return false;
     const urls = message.urls.slice(0, 16);
+    console.log("[FlatFlow] fetching images for listing", {
+      listingId: message.listingId,
+      count: urls.length,
+    });
     Promise.all(
       urls.map((url) =>
         fetch(url)

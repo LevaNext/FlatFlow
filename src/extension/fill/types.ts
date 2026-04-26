@@ -6,6 +6,10 @@ import type { ListingPrice } from "@/types/listing";
 
 /** Payload passed to site-specific statement form fillers. */
 export interface StatementFormPayload {
+  /** Internal FlatFlow listing identifier used to keep uploaded images scoped to one listing. */
+  listingId?: string;
+  /** Runtime guard used by content scripts to stop queued fill work when the extension closes. */
+  shouldContinue?: () => boolean;
   price?: ListingPrice;
   imageUrls?: string[];
   /** Status from listing (e.g. "ახალი აშენებული"). Matched to form option and selected if included. */
@@ -28,6 +32,8 @@ export interface StatementFormPayload {
   lang?: "ka" | "en" | "ru";
   /** Listing title; used to derive location when location is not set. */
   title?: string;
+  /** Public listing description. Filled into additional description textarea when present. */
+  description?: string;
   /** Area in m². Filled into area input (label "ფართი"). */
   area?: number;
   /** Number of rooms. Selected via click on matching option (1–10+). */
