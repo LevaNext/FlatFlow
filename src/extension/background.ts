@@ -5,6 +5,7 @@
  */
 
 import { LANDING_PAGE_URL, SUPPORTED_DOMAINS } from "@/shared/constants";
+import { clearExpiredParsedListings } from "@/storage/parsedListingStorage";
 import {
   MESSAGE_CLOSE_SIDE_PANEL,
   MESSAGE_FETCH_IMAGES,
@@ -14,6 +15,7 @@ import {
 } from "./messages";
 
 const STORAGE_KEY_SIDE_PANEL_OPEN = "sidePanelOpen";
+const PARSED_LISTING_CLEANUP_ALARM = "flatflowParsedListingCleanup";
 
 console.log("[FlatFlow] background loaded");
 
@@ -43,7 +45,26 @@ chrome.runtime.onInstalled.addListener(() => {
         (err as Error)?.message,
       ),
     );
+  scheduleParsedListingCleanup();
+  void clearExpiredParsedListings();
 });
+
+chrome.runtime.onStartup.addListener(() => {
+  scheduleParsedListingCleanup();
+  void clearExpiredParsedListings();
+});
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name !== PARSED_LISTING_CLEANUP_ALARM) return;
+  void clearExpiredParsedListings();
+});
+
+function scheduleParsedListingCleanup(): void {
+  chrome.alarms.create(PARSED_LISTING_CLEANUP_ALARM, {
+    delayInMinutes: 15,
+    periodInMinutes: 15,
+  });
+}
 
 chrome.action.onClicked.addListener((tab) => {
   console.log("[FlatFlow] icon clicked");
@@ -103,6 +124,11 @@ function blobToDataUrl(blob: Blob): Promise<string> {
   });
 }
 
+function normalizeFetchUrl(url: string): string {
+  const trimmed = url.trim();
+  return trimmed.startsWith("//") ? `https:${trimmed}` : trimmed;
+}
+
 chrome.runtime.onMessage.addListener(
   (
     message: { type: string; urls?: string[]; listingId?: string },
@@ -121,7 +147,7 @@ chrome.runtime.onMessage.addListener(
     }
     if (message.type !== MESSAGE_FETCH_IMAGES || !Array.isArray(message.urls))
       return false;
-    const urls = message.urls.slice(0, 16);
+    const urls = message.urls.slice(0, 16).map(normalizeFetchUrl);
     console.log("[FlatFlow] fetching images for listing", {
       listingId: message.listingId,
       count: urls.length,

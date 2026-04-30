@@ -11,6 +11,7 @@ import type { ParserError } from "@/types/parser";
 export const PARSED_LISTING_STORAGE_KEY = "parsedListing";
 export const ACTIVE_PARSED_LISTING_ID_STORAGE_KEY = "activeParsedListingId";
 export const PARSED_LISTINGS_BY_ID_STORAGE_KEY = "parsedListingsById";
+export const PARSED_LISTING_TTL_MS = 60 * 60 * 1000;
 
 export interface ParsedListingMeta {
   /** Must match `data.listingId`; used to validate storage scope. */
@@ -71,6 +72,10 @@ function copyPayload(payload: ParsedListingPayload): ParsedListingPayload {
   };
 }
 
+function isExpired(payload: ParsedListingPayload, now = Date.now()): boolean {
+  return now - payload.meta.parsedAt >= PARSED_LISTING_TTL_MS;
+}
+
 function validatePayload(
   payload: ParsedListingPayload | undefined,
   listingId: string,
@@ -78,6 +83,7 @@ function validatePayload(
   if (!payload) return null;
   if (payload.data.listingId !== listingId) return null;
   if (payload.meta.listingId !== listingId) return null;
+  if (isExpired(payload)) return null;
   return payload;
 }
 
@@ -85,6 +91,43 @@ async function getStoredListings(): Promise<StoredParsedListings> {
   const out = await chrome.storage.local.get(PARSED_LISTINGS_BY_ID_STORAGE_KEY);
   const raw = out[PARSED_LISTINGS_BY_ID_STORAGE_KEY];
   return isRecord(raw) ? (raw as StoredParsedListings) : {};
+}
+
+export async function clearExpiredParsedListings(): Promise<ClearResult> {
+  if (!hasChromeStorage()) {
+    return { ok: false, error: "Storage not available" };
+  }
+  try {
+    const out = await chrome.storage.local.get([
+      ACTIVE_PARSED_LISTING_ID_STORAGE_KEY,
+      PARSED_LISTINGS_BY_ID_STORAGE_KEY,
+    ]);
+    const rawListings = out[PARSED_LISTINGS_BY_ID_STORAGE_KEY];
+    const storedListings = isRecord(rawListings)
+      ? (rawListings as StoredParsedListings)
+      : {};
+    const activeListingId = out[ACTIVE_PARSED_LISTING_ID_STORAGE_KEY];
+    const remainingListings = Object.fromEntries(
+      Object.entries(storedListings).filter(([, payload]) => {
+        if (!isRecord(payload)) return false;
+        return !isExpired(payload as ParsedListingPayload);
+      }),
+    ) as StoredParsedListings;
+
+    await chrome.storage.local.set({
+      [PARSED_LISTINGS_BY_ID_STORAGE_KEY]: remainingListings,
+    });
+    if (
+      typeof activeListingId === "string" &&
+      remainingListings[activeListingId] == null
+    ) {
+      await chrome.storage.local.remove(ACTIVE_PARSED_LISTING_ID_STORAGE_KEY);
+    }
+    return { ok: true };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Unknown storage error";
+    return { ok: false, error: message };
+  }
 }
 
 /**
@@ -102,6 +145,7 @@ export async function saveParsedListing(
       return { ok: false, error: "Listing ID mismatch" };
     }
 
+    await clearExpiredParsedListings();
     const storedListings = await getStoredListings();
     await chrome.storage.local.set({
       [PARSED_LISTINGS_BY_ID_STORAGE_KEY]: {
@@ -126,6 +170,7 @@ export async function getParsedListing(listingId?: string): Promise<GetResult> {
     return { ok: false, error: "Storage not available" };
   }
   try {
+    await clearExpiredParsedListings();
     const out = await chrome.storage.local.get([
       ACTIVE_PARSED_LISTING_ID_STORAGE_KEY,
       PARSED_LISTINGS_BY_ID_STORAGE_KEY,

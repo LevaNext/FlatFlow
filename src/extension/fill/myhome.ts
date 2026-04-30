@@ -794,13 +794,20 @@ export function fillMyHomePhotoUpload(
         }
         const files = response.map((dataUrl, i) => dataUrlToFile(dataUrl, i));
         const container = document.querySelector(
-          '[data-test-id="input-photo-upload"]',
+          '[data-test-id="input-photo-upload"], .document-uploader, .drag-drop',
         );
-        const dropZone = container?.querySelector(".drag-drop");
-        const label = container?.querySelector(".pre-uploader, [for]");
-        const fileInput = container?.querySelector(
-          'input[type="file"]',
-        ) as HTMLInputElement | null;
+        const fileInput =
+          container?.querySelector<HTMLInputElement>('input[type="file"]') ??
+          document.querySelector<HTMLInputElement>(
+            '.document-uploader input[type="file"], input[type="file"][multiple][accept*=".webp"], input[type="file"][multiple][accept*=".jpg"]',
+          );
+        const dropZone =
+          fileInput?.closest(".drag-drop") ??
+          container?.querySelector(".drag-drop") ??
+          (container?.classList.contains("drag-drop") ? container : null);
+        const label =
+          fileInput?.closest("label") ??
+          container?.querySelector(".pre-uploader, [for]");
         LOG(
           "drop zone:",
           !!dropZone,
@@ -820,13 +827,15 @@ export function fillMyHomePhotoUpload(
         const dispatchDrop = () => {
           const d = new DataTransfer();
           for (const f of files) d.items.add(f);
+          let inputUploadSucceeded = false;
           if (fileInput && d.files.length > 0) {
             try {
               fileInput.files = d.files;
-              fileInput.dispatchEvent(new Event("input", { bubbles: true }));
+              // MyHome handles file selection on change; also dropping the same files can duplicate uploads.
               fileInput.dispatchEvent(new Event("change", { bubbles: true }));
+              inputUploadSucceeded = true;
               LOG(
-                "set file input.files and dispatched input+change, count:",
+                "set file input.files and dispatched change, count:",
                 d.files.length,
               );
             } catch (e) {
@@ -835,6 +844,12 @@ export function fillMyHomePhotoUpload(
                 (e as Error)?.message,
               );
             }
+          }
+          if (inputUploadSucceeded) {
+            LOG("skipped drop events because input upload succeeded", {
+              files: files.length,
+            });
+            return;
           }
           const opts = { bubbles: true, cancelable: true, dataTransfer: d };
           for (const target of targets) {
