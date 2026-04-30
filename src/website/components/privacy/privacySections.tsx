@@ -93,6 +93,10 @@ const privacySectionsEn: PrivacySection[] = [
           All stored data remains on the user&apos;s device and is not
           transmitted to any external servers.
         </p>
+        <p>
+          Temporary parsed listing data is kept for up to one hour and is then
+          automatically removed from local extension storage.
+        </p>
       </>
     ),
   },
@@ -167,6 +171,14 @@ const privacySectionsEn: PrivacySection[] = [
             <span>
               <strong className="font-semibold text-foreground">storage</strong>
               {" – "}to store temporary extension settings locally.
+            </span>
+          </li>
+          <li className="flex gap-2">
+            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+            <span>
+              <strong className="font-semibold text-foreground">alarms</strong>
+              {" – "}to periodically remove expired temporary listing data from
+              local storage.
             </span>
           </li>
           <li className="flex gap-2">
@@ -351,6 +363,10 @@ const privacySectionsKa: PrivacySection[] = [
           შენახული მონაცემები რჩება მომხმარებლის მოწყობილობაზე და არ გადაიცემა
           გარე სერვერებზე.
         </p>
+        <p>
+          დროებით დამუშავებული განცხადების მონაცემები ინახება მაქსიმუმ ერთი
+          საათით და შემდეგ ავტომატურად იშლება ლოკალური გაფართოების საცავიდან.
+        </p>
       </>
     ),
   },
@@ -422,6 +438,14 @@ const privacySectionsKa: PrivacySection[] = [
             <span>
               <strong className="font-semibold text-foreground">storage</strong>
               {" – "}გაფართოების დროებითი პარამეტრების ლოკალურად შესანახად.
+            </span>
+          </li>
+          <li className="flex gap-2">
+            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+            <span>
+              <strong className="font-semibold text-foreground">alarms</strong>
+              {" – "}ვადაგასული დროებითი განცხადების მონაცემების ლოკალური
+              საცავიდან პერიოდულად წასაშლელად.
             </span>
           </li>
           <li className="flex gap-2">
