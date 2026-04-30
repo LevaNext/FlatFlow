@@ -244,7 +244,7 @@ export function detectStatementPageLang(): StatementPageLang {
 }
 
 function isVisible(el: Element): boolean {
-  const style = window.getComputedStyle(el);
+  const style = globalThis.getComputedStyle(el);
   if (style.display === "none" || style.visibility === "hidden") return false;
   if (style.opacity === "0") return false;
   const rect = el.getBoundingClientRect();
@@ -420,6 +420,43 @@ function setStreet(address: string): void {
   LOG("setStreet: filled", address.trim());
 }
 
+function findDescriptionTextarea(): HTMLTextAreaElement | null {
+  const selectors = [
+    'textarea[placeholder="დაწერეთ დამატებითი აღწერა"]',
+    'textarea[placeholder*="აღწერა"]',
+    "div.relative.flex-grow textarea",
+  ];
+  for (const selector of selectors) {
+    const textarea = document.querySelector(selector);
+    if (textarea instanceof HTMLTextAreaElement) return textarea;
+  }
+  return null;
+}
+
+function setDescription(description: string): void {
+  const value = description.trim();
+  if (!value) return;
+
+  const textarea = findDescriptionTextarea();
+  if (!textarea) {
+    LOG("setDescription: textarea not found");
+    return;
+  }
+
+  const valueSetter = Object.getOwnPropertyDescriptor(
+    HTMLTextAreaElement.prototype,
+    "value",
+  )?.set;
+  if (valueSetter) {
+    valueSetter.call(textarea, value);
+  } else {
+    textarea.value = value;
+  }
+  textarea.dispatchEvent(new Event("input", { bubbles: true }));
+  textarea.dispatchEvent(new Event("change", { bubbles: true }));
+  LOG("setDescription: filled", { length: value.length });
+}
+
 /**
  * Set location: open dropdown, find the li whose first span matches any of location.ka/en/ru, then click that li.
  * Dropdown structure: .select-dropdown ul li, first span = location name (e.g. "თბილისი").
@@ -574,6 +611,29 @@ function delay(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+function fillMyHomeSynchronousDetails(payload: {
+  address?: string;
+  area?: number;
+  rooms?: number;
+  floor?: string;
+}): void {
+  if (payload.address?.trim()) {
+    setStreet(payload.address);
+  } else {
+    LOG("no address in payload, skipping street fill");
+  }
+
+  if (payload.area != null) {
+    setArea(payload.area);
+  }
+  if (payload.rooms != null) {
+    setRooms(payload.rooms);
+  }
+  if (payload.floor?.trim()) {
+    setFloor(payload.floor.trim());
+  }
+}
+
 /**
  * Fill the MyHome statement create form: total_price input, GEL/USD toggle, condition, status, location, then photo upload.
  * Resolves when queued UI work (location/project dropdowns, beds, photo upload) has finished.
@@ -582,6 +642,7 @@ export async function fillMyHomeStatementForm(
   payload: StatementFormPayload,
 ): Promise<void> {
   const {
+    listingId,
     price,
     imageUrls,
     status,
@@ -591,14 +652,21 @@ export async function fillMyHomeStatementForm(
     dealType,
     location: locationOption,
     address,
+    description,
     area,
     rooms,
     beds,
     floor,
   } = payload;
+  const shouldContinue = payload.shouldContinue ?? (() => true);
 
   const lang: StatementPageLang = payload.lang ?? detectStatementPageLang();
-  LOG("statement page lang:", lang);
+  LOG("statement page lang:", lang, "listingId:", listingId);
+
+  if (!shouldContinue()) {
+    LOG("statement fill cancelled before start", { listingId });
+    return;
+  }
 
   if (price) {
     setPriceAndCurrency(price);
@@ -633,20 +701,11 @@ export async function fillMyHomeStatementForm(
     await setProjectTypeAsync(projectType.trim());
   }
 
-  if (address?.trim()) {
-    setStreet(address);
+  fillMyHomeSynchronousDetails({ address, area, rooms, floor });
+  if (description?.trim()) {
+    setDescription(description);
   } else {
-    LOG("no address in payload, skipping street fill");
-  }
-
-  if (area != null) {
-    setArea(area);
-  }
-  if (rooms != null) {
-    setRooms(rooms);
-  }
-  if (floor?.trim()) {
-    setFloor(floor.trim());
+    LOG("no description in payload, skipping description fill");
   }
   if (beds != null) {
     await delay(400);
@@ -657,31 +716,44 @@ export async function fillMyHomeStatementForm(
   LOG(
     "imageUrls from payload:",
     imageUrls?.length ?? 0,
+    "listingId:",
+    listingId,
     imageUrls?.length ? "calling fillMyHomePhotoUpload" : "skipping photos",
   );
   if (imageUrls?.length) {
-    await fillMyHomePhotoUpload(imageUrls);
+    if (!shouldContinue()) {
+      LOG("statement fill cancelled before photo upload", { listingId });
+      return;
+    }
+    await fillMyHomePhotoUpload(imageUrls, listingId, shouldContinue);
   }
 }
 
 /**
  * Fetch images via background, build File list, and dispatch to the statement form photo upload (input + drag/drop).
  */
-export function fillMyHomePhotoUpload(imageUrls: string[]): Promise<void> {
+export function fillMyHomePhotoUpload(
+  imageUrls: string[],
+  listingId?: string,
+  shouldContinue: () => boolean = () => true,
+): Promise<void> {
   return new Promise((resolve) => {
     LOG(
       "fillMyHomePhotoUpload called, imageUrls count:",
       imageUrls.length,
+      "listingId:",
+      listingId,
       "urls:",
       imageUrls.slice(0, 3),
     );
     if (
       !imageUrls.length ||
       typeof chrome === "undefined" ||
-      !chrome.runtime?.sendMessage
+      !chrome.runtime?.sendMessage ||
+      !shouldContinue()
     ) {
       LOG(
-        "fillMyHomePhotoUpload skipped: no urls or no chrome.runtime.sendMessage",
+        "fillMyHomePhotoUpload skipped: no urls, runtime, or fill was cancelled",
       );
       resolve();
       return;
@@ -692,8 +764,15 @@ export function fillMyHomePhotoUpload(imageUrls: string[]): Promise<void> {
       urlsToFetch.length,
     );
     chrome.runtime.sendMessage(
-      { type: MESSAGE_FETCH_IMAGES, urls: urlsToFetch },
+      { type: MESSAGE_FETCH_IMAGES, urls: urlsToFetch, listingId },
       (response: string[] | { error?: string }) => {
+        if (!shouldContinue()) {
+          LOG("fillMyHomePhotoUpload cancelled before dispatch", {
+            listingId,
+          });
+          resolve();
+          return;
+        }
         if (chrome.runtime.lastError) {
           LOG("sendMessage error:", chrome.runtime.lastError.message);
           resolve();
@@ -715,13 +794,20 @@ export function fillMyHomePhotoUpload(imageUrls: string[]): Promise<void> {
         }
         const files = response.map((dataUrl, i) => dataUrlToFile(dataUrl, i));
         const container = document.querySelector(
-          '[data-test-id="input-photo-upload"]',
+          '[data-test-id="input-photo-upload"], .document-uploader, .drag-drop',
         );
-        const dropZone = container?.querySelector(".drag-drop");
-        const label = container?.querySelector(".pre-uploader, [for]");
-        const fileInput = container?.querySelector(
-          'input[type="file"]',
-        ) as HTMLInputElement | null;
+        const fileInput =
+          container?.querySelector<HTMLInputElement>('input[type="file"]') ??
+          document.querySelector<HTMLInputElement>(
+            '.document-uploader input[type="file"], input[type="file"][multiple][accept*=".webp"], input[type="file"][multiple][accept*=".jpg"]',
+          );
+        const dropZone =
+          fileInput?.closest(".drag-drop") ??
+          container?.querySelector(".drag-drop") ??
+          (container?.classList.contains("drag-drop") ? container : null);
+        const label =
+          fileInput?.closest("label") ??
+          container?.querySelector(".pre-uploader, [for]");
         LOG(
           "drop zone:",
           !!dropZone,
@@ -741,13 +827,15 @@ export function fillMyHomePhotoUpload(imageUrls: string[]): Promise<void> {
         const dispatchDrop = () => {
           const d = new DataTransfer();
           for (const f of files) d.items.add(f);
+          let inputUploadSucceeded = false;
           if (fileInput && d.files.length > 0) {
             try {
               fileInput.files = d.files;
-              fileInput.dispatchEvent(new Event("input", { bubbles: true }));
+              // MyHome handles file selection on change; also dropping the same files can duplicate uploads.
               fileInput.dispatchEvent(new Event("change", { bubbles: true }));
+              inputUploadSucceeded = true;
               LOG(
-                "set file input.files and dispatched input+change, count:",
+                "set file input.files and dispatched change, count:",
                 d.files.length,
               );
             } catch (e) {
@@ -756,6 +844,12 @@ export function fillMyHomePhotoUpload(imageUrls: string[]): Promise<void> {
                 (e as Error)?.message,
               );
             }
+          }
+          if (inputUploadSucceeded) {
+            LOG("skipped drop events because input upload succeeded", {
+              files: files.length,
+            });
+            return;
           }
           const opts = { bubbles: true, cancelable: true, dataTransfer: d };
           for (const target of targets) {
@@ -772,6 +866,13 @@ export function fillMyHomePhotoUpload(imageUrls: string[]): Promise<void> {
           );
         };
         setTimeout(() => {
+          if (!shouldContinue()) {
+            LOG("fillMyHomePhotoUpload cancelled during dispatch delay", {
+              listingId,
+            });
+            resolve();
+            return;
+          }
           dispatchDrop();
           setTimeout(resolve, 150);
         }, 300);

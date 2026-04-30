@@ -16,7 +16,8 @@
     "shortEn": "EN"
   },
   "upload": {
-    "myHome": "ატვირთე MyHome-ზე"
+    "myHome": "ატვირთე MyHome-ზე",
+    "ss": "ატვირთე SS.ge-ზე"
   },
   "status": {
     "parsing": "ჩამოწერა…",

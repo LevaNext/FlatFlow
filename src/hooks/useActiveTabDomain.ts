@@ -6,12 +6,13 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { MYHOME_GE } from "@/shared/constants";
+import { MYHOME_GE, SS_GE } from "@/shared/constants";
 
-/** Main listing site: show normal app UI (parse listing, upload, etc.) */
-const SUPPORTED_DOMAIN = MYHOME_GE.domain;
-/** Statement create page: show success/encouragement state only */
-const STATEMENT_DOMAIN = MYHOME_GE.statementHost;
+const SUPPORTED_LISTING_DOMAINS = [MYHOME_GE.domain, SS_GE.domain];
+const SUPPORTED_STATEMENT_DOMAINS = [
+  MYHOME_GE.statementHost,
+  SS_GE.statementHost,
+];
 
 function getDomainFromUrl(url: string | undefined): string | null {
   if (url == null || typeof url !== "string" || url.trim() === "") return null;
@@ -33,11 +34,22 @@ function getDomainFromUrl(url: string | undefined): string | null {
 
 /** True for myhome.ge and statements.myhome.ge (so panel shows app UI or statement success). */
 function isSupportedDomain(domain: string | null): boolean {
-  return domain === SUPPORTED_DOMAIN || domain === STATEMENT_DOMAIN;
+  if (domain == null) return false;
+  return (
+    SUPPORTED_LISTING_DOMAINS.includes(
+      domain as (typeof SUPPORTED_LISTING_DOMAINS)[number],
+    ) ||
+    SUPPORTED_STATEMENT_DOMAINS.includes(
+      domain as (typeof SUPPORTED_STATEMENT_DOMAINS)[number],
+    )
+  );
 }
 
 function isStatementPageDomain(domain: string | null): boolean {
-  return domain === STATEMENT_DOMAIN;
+  if (domain == null) return false;
+  return SUPPORTED_STATEMENT_DOMAINS.includes(
+    domain as (typeof SUPPORTED_STATEMENT_DOMAINS)[number],
+  );
 }
 
 /** Pathname from URL; null if unparseable. Root is "" or "/". */
@@ -62,8 +74,11 @@ function isListingDetailPath(
   pathname: string | null,
   domain: string | null,
 ): boolean {
-  if (domain !== SUPPORTED_DOMAIN || pathname == null) return false;
-  return pathname.toLowerCase().includes("/pr/");
+  if (pathname == null || domain == null) return false;
+  const normalizedPath = pathname.toLowerCase();
+  if (domain === MYHOME_GE.domain) return normalizedPath.includes("/pr/");
+  if (domain === SS_GE.domain) return normalizedPath.includes("/item/");
+  return false;
 }
 
 function queryActiveTab(): Promise<{
@@ -145,7 +160,7 @@ export function useActiveTabDomain(): UseActiveTabDomainResult {
 
   const isSupported = isSupportedDomain(domain);
   const isStatementPage = isStatementPageDomain(domain);
-  const isMyHomeRoot = domain === SUPPORTED_DOMAIN && isRootPath(pathname);
+  const isMyHomeRoot = domain === MYHOME_GE.domain && isRootPath(pathname);
   const isListingDetailPage = isListingDetailPath(pathname, domain);
 
   return {

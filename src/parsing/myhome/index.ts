@@ -9,6 +9,7 @@ export {
   parseMyHomeListing,
   parseMyHomeListingPhased,
 } from "./myhome.parser";
+export { getDescription } from "./selectors/getDescription";
 export { getImage, getImages } from "./selectors/getImage";
 export { getPrice } from "./selectors/getPrice";
 export { getTitle } from "./selectors/getTitle";

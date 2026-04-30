@@ -23,10 +23,11 @@ export const MYHOME_GE = {
 /** ss.ge: listing site (parsing/statement support coming). */
 export const SS_GE = {
   id: "ss",
-  hosts: ["www.ss.ge", "ss.ge"] as const,
+  hosts: ["www.ss.ge", "ss.ge", "home.ss.ge"] as const,
   domain: "ss.ge",
-  statementHost: "statements.ss.ge",
+  statementHost: "home.ss.ge",
   baseUrl: "https://www.ss.ge",
+  statementUrl: "https://home.ss.ge/ka/udzravi-qoneba/create",
 } as const;
 
 /** Supported hostnames (no www) for extension icon behavior. */

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "FlatFlow",
-  "version": "1.0.2",
+  "version": "1.0.5",
   "description": "Automatically repost listings",
   "icons": {
     "16": "icons/icon16.png",
@@ -21,16 +21,26 @@
   "side_panel": {
     "default_path": "sidepanel.html"
   },
-  "permissions": ["tabs", "activeTab", "scripting", "storage", "sidePanel"],
+  "permissions": [
+    "tabs",
+    "activeTab",
+    "scripting",
+    "storage",
+    "sidePanel",
+    "alarms"
+  ],
   "host_permissions": [
     "*://myhome.ge/*",
     "*://www.myhome.ge/*",
+    "https://static.my.ge/*",
+    "https://static-statements.tnet.ge/*",
     "https://api-statements.tnet.ge/*"
   ],
   "background": { "service_worker": "background.js", "type": "module" },
   "optional_host_permissions": [
     "https://www.ss.ge/*",
     "https://ss.ge/*",
+    "https://home.ss.ge/*",
     "https://statements.myhome.ge/*"
   ],
   "content_scripts": [
@@ -39,6 +49,7 @@
         "https://www.myhome.ge/*",
         "https://www.ss.ge/*",
         "https://ss.ge/*",
+        "https://home.ss.ge/*",
         "https://statements.myhome.ge/*"
       ],
       "js": ["content.js"],

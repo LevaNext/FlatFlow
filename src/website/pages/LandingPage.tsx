@@ -18,10 +18,10 @@ export function LandingPage(): React.ReactElement {
     if (location.hash !== "#donation") return;
     const el = document.getElementById("donation");
     if (!el) return;
-    const t = window.setTimeout(() => {
+    const t = globalThis.setTimeout(() => {
       el.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 80);
-    return () => window.clearTimeout(t);
+    return () => globalThis.clearTimeout(t);
   }, [location.hash]);
 
   return (

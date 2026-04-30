@@ -5,6 +5,7 @@ import type { ListingData } from "@/types/listing";
 import type { ParserError, ParserOutput } from "@/types/parser";
 import { getAddress } from "./selectors/getAddress";
 import { getCondition } from "./selectors/getCondition";
+import { getDescription } from "./selectors/getDescription";
 import { getImage, getImages } from "./selectors/getImage";
 import { getListingAttributes } from "./selectors/getListingAttributes";
 import { getListingMeta } from "./selectors/getListingMeta";
@@ -78,6 +79,13 @@ function applyAddress(data: Partial<ListingData>, doc: Document): void {
   if (result.ok) {
     data.address = result.value.address;
     if (result.value.subway) data.subway = result.value.subway;
+  }
+}
+
+function applyDescription(data: Partial<ListingData>, doc: Document): void {
+  const result = getDescription(doc);
+  if (result.ok && result.value.trim().length > 0) {
+    data.description = result.value.trim();
   }
 }
 
@@ -177,6 +185,7 @@ export const MYHOME_PARSE_PROGRESS_PHASE_ORDER = [
   "images",
   "price",
   "address",
+  "description",
   "listingMeta",
   "listingAttributes",
   "status",
@@ -207,6 +216,12 @@ const MYHOME_PHASES: {
     phase: "address",
     run: (d, _e, doc) => {
       applyAddress(d, doc);
+    },
+  },
+  {
+    phase: "description",
+    run: (d, _e, doc) => {
+      applyDescription(d, doc);
     },
   },
   {
